@@ -1,0 +1,31 @@
+import {
+  createItemService,
+  getAllItemsService,
+  getItemByIdService,
+} from "../services/item.services.js";
+import { HTTP_STATUS } from "../utils/httpCode.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { successResponse } from "../utils/response.js";
+import { ITEM } from "../utils/successMessage.js";
+
+export const createItem = asyncHandler(async (req, res) => {
+  const itemData = req.body;
+  const newItem = await createItemService(itemData);
+  successResponse(
+    res,
+    newItem,
+    HTTP_STATUS.CREATED,
+    ITEM.CREATED
+  );
+});
+
+export const getAllItems = asyncHandler(async (req, res) => {
+  const items = await getAllItemsService();
+  successResponse(res, items, HTTP_STATUS.OK, ITEM.RETRIEVED);
+});
+
+export const getItemById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const item = await getItemByIdService(id);
+  successResponse(res, item, HTTP_STATUS.OK, ITEM.RETRIEVED);
+});

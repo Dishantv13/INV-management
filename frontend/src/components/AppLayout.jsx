@@ -1,0 +1,65 @@
+import { Layout, Menu, Typography } from "antd";
+import {
+  BarChartOutlined,
+  DatabaseOutlined,
+  HistoryOutlined,
+  SwapOutlined,
+} from "@ant-design/icons";
+import { Link, useLocation } from "react-router-dom";
+import { ROUTE_URL } from "../enum/url";
+
+const { Header, Sider, Content } = Layout;
+const { Title, Text } = Typography;
+
+const navigationItems = [
+  { key: ROUTE_URL.DASHBOARD, icon: <BarChartOutlined />, label: <Link to={ROUTE_URL.DASHBOARD}>Dashboard</Link> },
+  {
+    key: ROUTE_URL.ITEMS,
+    icon: <DatabaseOutlined />,
+    label: <Link to={ROUTE_URL.ITEMS}>Items</Link>,
+  },
+  {
+    key: ROUTE_URL.STOCK_ADJUSTMENT,
+    icon: <SwapOutlined />,
+    label: <Link to={ROUTE_URL.STOCK_ADJUSTMENT}>Stock Adjustment</Link>,
+  },
+  {
+    key: ROUTE_URL.STOCK_HISTORY,
+    icon: <HistoryOutlined />,
+    label: <Link to={ROUTE_URL.STOCK_HISTORY}>Stock History</Link>,
+  },
+];
+
+const AppLayout = ({ children }) => {
+  const { pathname } = useLocation();
+
+  const selectedKey =
+    navigationItems.find((item) => pathname === item.key)?.key || "/";
+
+  return (
+    <Layout className="app-shell">
+      <Sider breakpoint="lg" collapsedWidth="0" width={240} theme="light">
+        <div className="brand-block">
+          <Title level={4}>Inventory Pro</Title>
+          <Text type="secondary">Stock movement tracking</Text>
+        </div>
+        <Menu
+          mode="inline"
+          selectedKeys={[selectedKey]}
+          items={navigationItems}
+          className="side-menu"
+        />
+      </Sider>
+      <Layout>
+        <Header className="app-header">
+          <Title level={4} style={{ margin: 0 }}>
+            Inventory Management
+          </Title>
+        </Header>
+        <Content className="app-content">{children}</Content>
+      </Layout>
+    </Layout>
+  );
+};
+
+export default AppLayout;
