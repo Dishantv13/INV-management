@@ -20,8 +20,8 @@ export const createItem = asyncHandler(async (req, res) => {
 });
 
 export const getAllItems = asyncHandler(async (req, res) => {
-  const items = await getAllItemsService();
-  successResponse(res, items, HTTP_STATUS.OK, ITEM.RETRIEVED);
+  const { data, pagination } = await getAllItemsService(req.query);
+  successResponse(res, data, HTTP_STATUS.OK, ITEM.RETRIEVED, pagination);
 });
 
 export const getItemById = asyncHandler(async (req, res) => {

@@ -10,6 +10,13 @@ const StockAdjustmentForm = ({
 }) => {
   const [form] = Form.useForm();
 
+  const option = [
+    { value: "manual", label: "Manual" },
+    { value: "sale", label: "Sale" },
+    { value: "purchase", label: "Purchase" },
+    { value: "adjustment", label: "Adjustment" },
+  ];
+
   useEffect(() => {
     if (selectedItemId) {
       form.setFieldValue("itemId", selectedItemId);
@@ -61,7 +68,9 @@ const StockAdjustmentForm = ({
             {
               validator: (_, value) => {
                 if (!value || value <= 0) {
-                  return Promise.reject(new Error("Quantity must be greater than 0"));
+                  return Promise.reject(
+                    new Error("Quantity must be greater than 0"),
+                  );
                 }
                 return Promise.resolve();
               },
@@ -74,21 +83,21 @@ const StockAdjustmentForm = ({
         <Form.Item
           name="reference"
           label="Adjustment Reference"
-          rules={[{ required: true, message: "Please select a reference type" }]}
+          rules={[
+            { required: true, message: "Please select a reference type" },
+          ]}
         >
           <Select
             placeholder="Select reference type"
-            options={[
-              { value: "manual", label: "Manual" },
-              { value: "sale", label: "Sale" },
-              { value: "purchase", label: "Purchase" },
-              { value: "adjustment", label: "Adjustment" },
-            ]}
+            options={option}
           />
         </Form.Item>
 
         <Form.Item name="note" label="Note (Optional)">
-          <Input.TextArea rows={3} placeholder="Optional note for this adjustment" />
+          <Input.TextArea
+            rows={3}
+            placeholder="Optional note for this adjustment"
+          />
         </Form.Item>
 
         <Space>

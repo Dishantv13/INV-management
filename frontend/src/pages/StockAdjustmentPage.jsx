@@ -15,7 +15,6 @@ const StockAdjustmentPage = () => {
   const { data: items = [], isLoading: itemsLoading } = useGetItemsQuery();
   const [stockIn, { isLoading: isStockInLoading }] = useStockInMutation();
   const [stockOut, { isLoading: isStockOutLoading }] = useStockOutMutation();
-
   const handleItemChange = (itemId) => {
     const nextParams = new URLSearchParams(searchParams);
 
@@ -42,7 +41,9 @@ const StockAdjustmentPage = () => {
       } else {
         await stockOut(payload).unwrap();
       }
-      messageApi.success(`Stock ${values.type === "IN" ? "added" : "removed"} successfully`);
+      messageApi.success(
+        `variation ${values.type === "IN" ? "added to" : "removed from"} stock successfully`,
+      );
       return true;
     } catch (error) {
       messageApi.error(error?.data?.message || "Stock update failed");
@@ -50,10 +51,13 @@ const StockAdjustmentPage = () => {
     }
   };
 
-  const loading = itemsLoading || isStockInLoading || isStockOutLoading;
+  const loading =
+    itemsLoading ||
+    isStockInLoading ||
+    isStockOutLoading;
 
   return (
-    <div>
+    <div>   
       {contextHolder}
       <PageHeaderBar
         title="Stock Adjustment"

@@ -6,26 +6,48 @@ import StockHistoryTable from "../components/StockHistoryTable";
 import { useGetItemsQuery } from "../services/itemApi";
 import { useStockHistoryQuery } from "../services/stockMovementApi";
 
+const parsePositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
+
 const StockHistoryPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialItemId = searchParams.get("itemId");
+  const page = parsePositiveInt(searchParams.get("page")) || 1;
+  const limit = parsePositiveInt(searchParams.get("limit")) || 10;
   const [selectedItemId, setSelectedItemId] = useState(initialItemId || null);
+
   const { data: items = [], isLoading: itemsLoading } = useGetItemsQuery();
-  const { data: history = [], isLoading: historyLoading } =
-    useStockHistoryQuery(selectedItemId, { refetchOnMountOrArgChange: true });
+  const {
+    data: historyResponse = { data: [], pagination: null },
+    isLoading: historyLoading,
+  } = useStockHistoryQuery(
+    { itemId: selectedItemId, page, limit },
+    { refetchOnMountOrArgChange: true }
+  );
 
   const handleItemChange = (value) => {
     setSelectedItemId(value || null);
-    updateSearchParams(value || null);
+    updateSearchParams(value || null, 1, limit);
   };
 
-  const updateSearchParams = (itemId) => {
+  const updateSearchParams = (itemId, nextPage = page, nextLimit = limit) => {
+    const nextParams = new URLSearchParams(searchParams);
+
     if (itemId) {
-      searchParams.set("itemId", itemId);
+      nextParams.set("itemId", itemId);
     } else {
-      searchParams.delete("itemId");
+      nextParams.delete("itemId");
     }
-    setSearchParams(searchParams);
+
+    nextParams.set("page", String(nextPage));
+    nextParams.set("limit", String(nextLimit));
+    setSearchParams(nextParams);
+  };
+
+  const handlePaginationChange = (nextPage, nextPageSize) => {
+    updateSearchParams(selectedItemId, nextPage, nextPageSize);
   };
 
   return (
@@ -48,7 +70,12 @@ const StockHistoryPage = () => {
           }))}
         />
       </Card>
-      <StockHistoryTable data={history} loading={historyLoading} />
+      <StockHistoryTable
+        data={historyResponse.data}
+        loading={historyLoading}
+        pagination={historyResponse.pagination}
+        onPaginationChange={handlePaginationChange}
+      />
     </div>
   );
 };

@@ -1,16 +1,36 @@
 import { useState } from "react";
 import { Button, Card, message } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import { useSearchParams } from "react-router-dom";
 import AddItemModal from "../components/AddItemModel";
 import ItemTable from "../components/ItemTable";
 import PageHeaderBar from "../components/PageHeaderBar";
-import { useCreateItemMutation, useGetItemsQuery } from "../services/itemApi";
+import { useCreateItemMutation, useGetItemsPaginatedQuery } from "../services/itemApi";
+
+const parsePositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
 
 const ItemListPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = parsePositiveInt(searchParams.get("page")) || 1;
+  const limit = parsePositiveInt(searchParams.get("limit")) || 10;
+  
   const [messageApi, contextHolder] = message.useMessage();
   const [openAddModal, setOpenAddModal] = useState(false);
-  const { data: items = [], isLoading } = useGetItemsQuery();
+  const {
+    data: itemResponse = { data: [], pagination: null },
+    isLoading,
+  } = useGetItemsPaginatedQuery({ page, limit });
   const [createItem, { isLoading: isCreating }] = useCreateItemMutation();
+
+  const handlePaginationChange = (nextPage, nextPageSize) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("page", String(nextPage));
+    nextParams.set("limit", String(nextPageSize));
+    setSearchParams(nextParams);
+  };
 
   const handleAddItem = async (payload) => {
     try {
@@ -36,7 +56,12 @@ const ItemListPage = () => {
       />
 
       <Card>
-        <ItemTable items={items} loading={isLoading} />
+        <ItemTable
+          items={itemResponse.data}
+          loading={isLoading}
+          pagination={itemResponse.pagination}
+          onPaginationChange={handlePaginationChange}
+        />
       </Card>
 
       <AddItemModal

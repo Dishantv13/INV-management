@@ -16,7 +16,6 @@ const AddItemModal = ({
     <Modal
       title="Create New Inventory Item"
       open={open}
-      destroyOnClose
       onCancel={() => {
         form.resetFields();
         onCancel();

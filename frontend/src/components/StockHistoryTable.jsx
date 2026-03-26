@@ -1,6 +1,11 @@
 import { Empty, Table, Tag } from "antd";
 
-const StockHistoryTable = ({ data, loading }) => {
+const StockHistoryTable = ({
+  data,
+  loading,
+  pagination,
+  onPaginationChange,
+}) => {
   const columns = [
     {
       title: "Item",
@@ -16,13 +21,24 @@ const StockHistoryTable = ({ data, loading }) => {
       title: "Type",
       dataIndex: "type",
       key: "type",
-      render: (value) =>
-        value === "IN" ? <Tag color="success">IN</Tag> : <Tag color="error">OUT</Tag>,
+      render: (value) => {
+        if (value === "IN") {
+          return <Tag color="success">IN</Tag>;
+        } else if (value === "OUT") {
+          return <Tag color="error">OUT</Tag>;
+        }
+        return <Tag color="blue">ADJ</Tag>;
+      },
     },
     {
       title: "Quantity",
       dataIndex: "quantity",
       key: "quantity",
+    },
+    {
+        title: "Current Stock",
+        dataIndex: "currentStock",
+        key: "currentStock",
     },
     {
       title: "Reference",
@@ -47,7 +63,24 @@ const StockHistoryTable = ({ data, loading }) => {
       columns={columns}
       dataSource={data}
       loading={loading}
-      pagination={{ pageSize: 8 }}
+      pagination={
+        pagination
+          ? {
+              current: pagination.page,
+              pageSize: pagination.limit,
+              total: pagination.totalItems,
+              onChange: onPaginationChange,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              pageSizeOptions: ["5", "10", "20", "50"],
+              showTotal: (total, range) =>
+                `Showing ${range[0]}-${range[1]} of ${total} ${
+                  total === 1 ? "record" : "records"
+                }`,
+              position: ["bottomRight"],
+            }
+          : false
+      }
     />
   );
 };

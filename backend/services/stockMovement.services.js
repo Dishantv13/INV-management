@@ -3,6 +3,7 @@ import { Item } from "../models/item.model.js";
 import { HTTP_STATUS } from "../utils/httpCode.js";
 import ApiError from "../utils/apiError.js";
 import mongoose from "mongoose";
+import { getPagination, getPaginationMeta } from "../utils/pagination.js";
 
 const validateCommonMovementData = ({ itemId, quantity }) => {
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
@@ -27,6 +28,8 @@ const runStockMovementTransaction = async (movementData) => {
   try {
     await session.withTransaction(async () => {
       const item = await Item.findById(itemId).session(session);
+      const previousStock = item.currentStock;
+      let movementQty = 0;
       if (!item) {
         throw new ApiError(HTTP_STATUS.NOT_FOUND, "Item not found");
       }
@@ -35,13 +38,22 @@ const runStockMovementTransaction = async (movementData) => {
         if (item.currentStock < quantity) {
           throw new ApiError(
             HTTP_STATUS.BAD_REQUEST,
-            "Insufficient stock for this movement",
+            "Quantity cannot be greater than current stock for OUT movement",
           );
         }
-        item.currentStock -= quantity;
+        movementQty = previousStock - quantity;
+        item.currentStock = quantity;
       } else if (type === "IN") {
-        item.currentStock += quantity;
-      } else {
+        if (quantity < item.currentStock) {
+          throw new ApiError(
+            HTTP_STATUS.BAD_REQUEST,
+            "Quantity cannot be less than current stock for IN movement",
+          );
+        }
+        movementQty = quantity - previousStock;
+        item.currentStock = quantity;
+      }
+      else {
         throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid movement type");
       }
 
@@ -50,10 +62,11 @@ const runStockMovementTransaction = async (movementData) => {
         [
           {
             itemId,
-            quantity,
+            quantity: movementQty,
             type,
             reference: reference || "manual",
-            note,
+            note: note || `Stock changed from ${previousStock} to ${quantity}`,
+            currentStock: quantity,
           },
         ],
         { session },
@@ -85,25 +98,52 @@ export const updateStockService = async (movementData) => {
   throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid movement type");
 };
 
-export const getStockHistoryServices = async (itemId) => {
+const getPaginatedHistory = async (filter = {}, query = {}) => {
+  const usePagination =
+    query.page !== undefined ||
+    query.limit !== undefined ||
+    query.skip !== undefined;
+
+  if (!usePagination) {
+    const history = await StockMovement.find(filter)
+      .populate("itemId", "name sku")
+      .sort({ createdAt: -1 });
+
+    return { data: history, pagination: null };
+  }
+
+  const { page, limit, skip } = getPagination({
+    page: query.page,
+    limit: query.limit,
+    skip: query.skip,
+  });
+
+  const totalItems = await StockMovement.countDocuments(filter);
+  const history = await StockMovement.find(filter)
+    .populate("itemId", "name sku")
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    data: history,
+    pagination: getPaginationMeta(totalItems, page, limit),
+  };
+};
+
+export const getStockHistoryServices = async (itemId, query = {}) => {
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
     throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid itemId");
   }
-
+  
   const item = await Item.findById(itemId);
   if (!item) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, "Item not found");
   }
-  const history = await StockMovement.find({ itemId })
-  .populate("itemId", "name sku")
-  .sort({ createdAt: -1 });
-  return history;
+
+  return getPaginatedHistory({ itemId }, query);
 };
 
-export const getAllStockHistoryServices = async () => {
-  const history = await StockMovement.find()
-    .populate("itemId", "name sku")
-    .sort({ createdAt: -1 });
-
-  return history;
+export const getAllStockHistoryServices = async (query = {}) => {
+  return getPaginatedHistory({}, query);
 };

@@ -3,13 +3,20 @@ import { Tag, Space, Typography } from "antd";
 const { Text } = Typography;
 
 export const getItemColumns = ({
+  nameTitle = "Name",
   showPrice = true,
   showSorter = false,
+  priceFormatter = (value) => `Rs. ${Number(value).toFixed(2)}`,
+  showThreshold = false,
   highlightLowStock = true,
-}) => {
+  stockHealthyColor = "#135200",
+  showLowStockStatus = false,
+  lowStockStatusLabel = "Low",
+  healthyStatusLabel = "OK",
+} = {}) => {
   const columns = [
     {
-      title: "Item Name",
+      title: nameTitle,
       dataIndex: "name",
       key: "name",
       ...(showSorter && {
@@ -28,7 +35,7 @@ export const getItemColumns = ({
       title: "Price",
       dataIndex: "price",
       key: "price",
-      render: (price) => `₹ ${price.toFixed(2)}`,
+      render: (price) => priceFormatter(price),
     });
   }
 
@@ -43,6 +50,14 @@ export const getItemColumns = ({
         return <Tag color="red">{stock}</Tag>;
       }
 
+      if (showLowStockStatus) {
+        return (
+          <Text strong style={{ color: isLow ? "#cf1322" : stockHealthyColor }}>
+            {stock}
+          </Text>
+        );
+      }
+
       return (
         <Space>
           <Text strong style={{ color: isLow ? "#cf1322" : "inherit" }}>
@@ -54,17 +69,37 @@ export const getItemColumns = ({
     },
   });
 
-  columns.push({
-    title: "Threshold",
-    dataIndex: "lowStockThreshold",
-    key: "lowStockThreshold",
-  });
+  if (showLowStockStatus) {
+    columns.push({
+      title: "Low Stock",
+      key: "low-stock",
+      render: (_, record) => {
+        const isLowStock = record.currentStock <= record.lowStockThreshold;
+        return isLowStock ? (
+          <Tag color="error">{lowStockStatusLabel}</Tag>
+        ) : (
+          <Tag color="success">{healthyStatusLabel}</Tag>
+        );
+      },
+    });
+  }
+
+  if (showThreshold) {
+    columns.push({
+      title: "Threshold",
+      dataIndex: "lowStockThreshold",
+      key: "lowStockThreshold",
+    });
+  }
 
   return columns;
 };
 
 export const lowStockColumns = getItemColumns({
+  nameTitle: "Item Name",
   showPrice: true,
   showSorter: false,
+  showThreshold: true,
   highlightLowStock: true,
+  showLowStockStatus: false,
 });

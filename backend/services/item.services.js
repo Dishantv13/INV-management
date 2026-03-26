@@ -1,6 +1,7 @@
 import { Item } from "../models/item.model.js";
 import { HTTP_STATUS } from "../utils/httpCode.js";
 import ApiError from "../utils/apiError.js";
+import { getPagination, getPaginationMeta } from "../utils/pagination.js";
 
 export const createItemService = async (itemData) => {
   const { name, sku, price, currentStock, lowStockThreshold } = itemData;
@@ -9,7 +10,10 @@ export const createItemService = async (itemData) => {
   }
 
   if (typeof price !== "number" || Number.isNaN(price) || price <= 0) {
-    throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Price must be greater than zero");
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      "Price must be greater than zero",
+    );
   }
 
   if (currentStock !== undefined && currentStock !== 0) {
@@ -40,11 +44,42 @@ export const createItemService = async (itemData) => {
 };
 
 export const getAllItemsService = async (query = {}) => {
-  const items = await Item.find(query).sort({ createdAt: -1 });
-  return items.map((item) => ({
-    ...item.toObject(),
-    isLowStock: item.currentStock <= item.lowStockThreshold,
-  }));
+  const filter = {};
+  const usePagination = query.page !== undefined || query.limit !== undefined || query.skip !== undefined;
+
+  if (query.lowStockOnly === "true") {
+    filter.$expr = { $lte: ["$currentStock", "$lowStockThreshold"] };
+  }
+
+  if (!usePagination) {
+    const items = await Item.find(filter).sort({ createdAt: -1 });
+    return {
+      data: items.map((item) => ({
+        ...item.toObject(),
+        isLowStock: item.currentStock <= item.lowStockThreshold,
+      })),
+      pagination: null,
+    };
+  }
+
+  const { page, limit, skip } = getPagination({
+    page: query.page,
+    limit: query.limit,
+    skip: query.skip,
+  });
+  const totalItems = await Item.countDocuments(filter);
+  const items = await Item.find(filter)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  return {
+    data: items.map((item) => ({
+      ...item.toObject(),
+      isLowStock: item.currentStock <= item.lowStockThreshold,
+    })),
+    pagination: getPaginationMeta(totalItems, page, limit),
+  };
 };
 
 export const getItemByIdService = async (itemId) => {

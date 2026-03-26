@@ -8,7 +8,7 @@ const stockMovementSchema = new Schema(
       required: true,
     },
     type: {
-      enum: ["IN", "OUT"],
+      enum: ["IN", "OUT", "ADJUSTMENT"],
       type: String,
       required: true,
     },
@@ -26,6 +26,11 @@ const stockMovementSchema = new Schema(
       type: String,
       trim: true,
       optional: true,
+    },
+    currentStock: {
+      type: Number,
+      required: true,
+      min: 0,
     },
   },
   { timestamps: true },

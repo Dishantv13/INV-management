@@ -6,9 +6,22 @@ import { ITEM_URL } from "../enum/url";
 export const itemApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getItems: builder.query({
-      query: () => ITEM_URL.BASE,
+      query: () => ({
+        url: ITEM_URL.BASE,
+      }),
       transformResponse: (response) => response?.data || [],
-      providesTags: (result = []) => tagListWithIds(TAG_TYPES.ITEMS, result),
+      providesTags: (result) => tagListWithIds(TAG_TYPES.ITEMS, result || []),
+    }),
+    getItemsPaginated: builder.query({
+      query: ({ page = 1, limit = 5, skip, lowStockOnly = false } = {}) => ({
+        url: ITEM_URL.BASE,
+        params: { page, limit, skip, lowStockOnly },
+      }),
+      transformResponse: (response) => ({
+        data: response?.data || [],
+        pagination: response?.pagination || null,
+      }),
+      providesTags: (result) => tagListWithIds(TAG_TYPES.ITEMS, result?.data || []),
     }),
     createItem: builder.mutation({
       query: (payload) => ({
@@ -22,4 +35,8 @@ export const itemApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetItemsQuery, useCreateItemMutation } = itemApi;
+export const {
+  useGetItemsQuery,
+  useGetItemsPaginatedQuery,
+  useCreateItemMutation,
+} = itemApi;

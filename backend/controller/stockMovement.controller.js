@@ -35,21 +35,23 @@ export const removeStock = asyncHandler(async (req, res) => {
 
 export const getStockHistory = asyncHandler(async (req, res) => {
   const { itemId } = req.params;
-  const history = await getStockHistoryServices(itemId);
+  const { data, pagination } = await getStockHistoryServices(itemId, req.query);
   successResponse(
     res,
-    history,
+    data,
     HTTP_STATUS.OK,
-    STOCK_MOVEMENT.HISTORY_RETRIEVED
+    STOCK_MOVEMENT.HISTORY_RETRIEVED,
+    pagination,
   );
 });
 
 export const getAllStockHistory = asyncHandler(async (req, res) => {
-  const history = await getAllStockHistoryServices();
+  const { data, pagination } = await getAllStockHistoryServices(req.query);
   successResponse(
     res,
-    history,
+    data,
     HTTP_STATUS.OK,
     STOCK_MOVEMENT.HISTORY_RETRIEVED,
+    pagination,
   );
 });
