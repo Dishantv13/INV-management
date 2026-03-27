@@ -11,7 +11,7 @@ const DashboardCard = ({ items }) => {
 
   const totalStockValue = items.reduce(
     (acc, current) => acc + current.price * current.currentStock,
-    0
+    0,
   );
 
   const totalStockUnits = items.reduce(

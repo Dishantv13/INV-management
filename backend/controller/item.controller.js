@@ -11,12 +11,7 @@ import { ITEM } from "../utils/successMessage.js";
 export const createItem = asyncHandler(async (req, res) => {
   const itemData = req.body;
   const newItem = await createItemService(itemData);
-  successResponse(
-    res,
-    newItem,
-    HTTP_STATUS.CREATED,
-    ITEM.CREATED
-  );
+  successResponse(res, newItem, HTTP_STATUS.CREATED, ITEM.CREATED);
 });
 
 export const getAllItems = asyncHandler(async (req, res) => {

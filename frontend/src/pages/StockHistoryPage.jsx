@@ -24,7 +24,7 @@ const StockHistoryPage = () => {
     isLoading: historyLoading,
   } = useStockHistoryQuery(
     { itemId: selectedItemId, page, limit },
-    { refetchOnMountOrArgChange: true }
+    { refetchOnMountOrArgChange: true },
   );
 
   const handleItemChange = (value) => {
@@ -64,6 +64,11 @@ const StockHistoryPage = () => {
           onChange={handleItemChange}
           allowClear
           loading={itemsLoading}
+          showSearch
+          optionFilterProp="label"
+          filterOption={(input, option) =>
+            option.label.toLowerCase().includes(input.toLowerCase())
+          }
           options={items.map((item) => ({
             value: item._id,
             label: `${item.name} (${item.sku})`,

@@ -24,10 +24,9 @@ const StockHistoryTable = ({
       render: (value) => {
         if (value === "IN") {
           return <Tag color="success">IN</Tag>;
-        } else if (value === "OUT") {
+        } else {
           return <Tag color="error">OUT</Tag>;
         }
-        return <Tag color="blue">ADJ</Tag>;
       },
     },
     {
@@ -36,9 +35,9 @@ const StockHistoryTable = ({
       key: "quantity",
     },
     {
-        title: "Current Stock",
-        dataIndex: "currentStock",
-        key: "currentStock",
+      title: "Current Stock",
+      dataIndex: "currentStock",
+      key: "currentStock",
     },
     {
       title: "Reference",

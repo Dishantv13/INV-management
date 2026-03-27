@@ -51,13 +51,10 @@ const StockAdjustmentPage = () => {
     }
   };
 
-  const loading =
-    itemsLoading ||
-    isStockInLoading ||
-    isStockOutLoading;
+  const loading = itemsLoading || isStockInLoading || isStockOutLoading;
 
   return (
-    <div>   
+    <div>
       {contextHolder}
       <PageHeaderBar
         title="Stock Adjustment"

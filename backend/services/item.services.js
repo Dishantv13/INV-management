@@ -45,10 +45,18 @@ export const createItemService = async (itemData) => {
 
 export const getAllItemsService = async (query = {}) => {
   const filter = {};
-  const usePagination = query.page !== undefined || query.limit !== undefined || query.skip !== undefined;
+  const usePagination =
+    query.page !== undefined ||
+    query.limit !== undefined ||
+    query.skip !== undefined;
 
-  if (query.lowStockOnly === "true") {
+  if  (query.lowStockOnly === "true") {
     filter.$expr = { $lte: ["$currentStock", "$lowStockThreshold"] };
+  }
+        
+  if (query.search) {
+    const searchRegex = new RegExp(query.search, "i");
+    filter.$or = [{ name: searchRegex }, { sku: searchRegex }];
   }
 
   if (!usePagination) {

@@ -1,8 +1,17 @@
-import { Space, Typography } from "antd";
+import { Space, Typography, Input } from "antd";
 
+const { Search } = Input;
 const { Title, Text } = Typography;
 
-const PageHeaderBar = ({ title, subtitle, rightNode }) => {
+const PageHeaderBar = ({
+  title,
+  subtitle,
+  rightNode,
+  showSearch,
+  searchPlaceholder,
+  onSearch,
+  defaultSearchValue,
+}) => {
   return (
     <div className="page-header-bar">
       <Space direction="vertical" size={0}>
@@ -11,6 +20,24 @@ const PageHeaderBar = ({ title, subtitle, rightNode }) => {
         </Title>
         {subtitle ? <Text type="secondary">{subtitle}</Text> : null}
       </Space>
+
+      <Space>
+        {showSearch && (
+          <Search
+            placeholder={searchPlaceholder || "Search..."}
+            onSearch={onSearch}
+            onChange={(event) => {
+              if (!event?.target?.value) {
+                onSearch?.("");
+              }
+            }}
+            defaultValue={defaultSearchValue}
+            allowClear
+            style={{ width: 250 }}
+          />
+        )}
+      </Space>
+
       {rightNode}
     </div>
   );

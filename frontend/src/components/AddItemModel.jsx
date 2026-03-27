@@ -1,11 +1,6 @@
 import { Modal, Form, Input, InputNumber } from "antd";
 
-const AddItemModal = ({
-  open,
-  onCancel,
-  onSubmit,
-  loading,
-}) => {
+const AddItemModal = ({ open, onCancel, onSubmit, loading }) => {
   const [form] = Form.useForm();
 
   const handleFinish = (values) => {

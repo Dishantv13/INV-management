@@ -21,5 +21,4 @@ app.use("/api/stock", stockRoutes);
 
 app.use(globalErrorHandler);
 
-
 export default app;

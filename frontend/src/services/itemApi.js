@@ -13,15 +13,16 @@ export const itemApi = baseApi.injectEndpoints({
       providesTags: (result) => tagListWithIds(TAG_TYPES.ITEMS, result || []),
     }),
     getItemsPaginated: builder.query({
-      query: ({ page = 1, limit = 5, skip, lowStockOnly = false } = {}) => ({
+      query: ({ page = 1, limit = 5, skip, search, lowStockOnly = false } = {}) => ({
         url: ITEM_URL.BASE,
-        params: { page, limit, skip, lowStockOnly },
+        params: { page, limit, skip, search, lowStockOnly },
       }),
       transformResponse: (response) => ({
         data: response?.data || [],
         pagination: response?.pagination || null,
       }),
-      providesTags: (result) => tagListWithIds(TAG_TYPES.ITEMS, result?.data || []),
+      providesTags: (result) =>
+        tagListWithIds(TAG_TYPES.ITEMS, result?.data || []),
     }),
     createItem: builder.mutation({
       query: (payload) => ({

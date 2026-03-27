@@ -32,7 +32,8 @@ const ItemTable = ({ items, loading, pagination, onPaginationChange }) => {
               showQuickJumper: true,
               pageSizeOptions: ["5", "10", "20", "50"],
               showTotal: (total, range) =>
-                `Showing ${range[0]}-${range[1]} of ${total} ${total === 1 ? "item" : "items"
+                `Showing ${range[0]}-${range[1]} of ${total} ${
+                  total === 1 ? "item" : "items"
                 }`,
               position: ["bottomRight"],
             }

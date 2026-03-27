@@ -35,25 +35,24 @@ const runStockMovementTransaction = async (movementData) => {
       }
 
       if (type === "OUT") {
-        if (item.currentStock < quantity) {
+        if (item.currentStock <= quantity) {
           throw new ApiError(
             HTTP_STATUS.BAD_REQUEST,
-            "Quantity cannot be greater than current stock for OUT movement",
+            "Quantity cannot be greater than or equal to current stock for OUT movement",
           );
         }
         movementQty = previousStock - quantity;
         item.currentStock = quantity;
       } else if (type === "IN") {
-        if (quantity < item.currentStock) {
+        if (quantity <= item.currentStock) {
           throw new ApiError(
             HTTP_STATUS.BAD_REQUEST,
-            "Quantity cannot be less than current stock for IN movement",
+            "Quantity cannot be less than or equal to current stock for IN movement",
           );
         }
         movementQty = quantity - previousStock;
         item.currentStock = quantity;
-      }
-      else {
+      } else {
         throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid movement type");
       }
 
@@ -135,7 +134,7 @@ export const getStockHistoryServices = async (itemId, query = {}) => {
   if (!mongoose.Types.ObjectId.isValid(itemId)) {
     throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid itemId");
   }
-  
+
   const item = await Item.findById(itemId);
   if (!item) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, "Item not found");

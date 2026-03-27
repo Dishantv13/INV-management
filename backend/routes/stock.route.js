@@ -1,10 +1,10 @@
 import { Router } from "express";
 import {
-	addStock,
-	getAllStockHistory,
-	removeStock,
-	updateStock,
-	getStockHistory,
+  addStock,
+  getAllStockHistory,
+  removeStock,
+  updateStock,
+  getStockHistory,
 } from "../controller/stockMovement.controller.js";
 
 const router = Router();

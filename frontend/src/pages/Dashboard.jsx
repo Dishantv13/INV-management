@@ -3,7 +3,10 @@ import { useSearchParams } from "react-router-dom";
 import DashboardCard from "../components/DashboardCard";
 import LowStockTable from "../components/LowStockTable";
 import PageHeaderBar from "../components/PageHeaderBar";
-import { useGetItemsPaginatedQuery, useGetItemsQuery } from "../services/itemApi";
+import {
+  useGetItemsPaginatedQuery,
+  useGetItemsQuery,
+} from "../services/itemApi";
 
 const parsePositiveInt = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
@@ -16,14 +19,12 @@ const Dashboard = () => {
   const limit = parsePositiveInt(searchParams.get("limit"), 5);
 
   const { data: items = [] } = useGetItemsQuery();
-  const {
-    data: lowStockResponse = { data: [], pagination: null },
-    isLoading,
-  } = useGetItemsPaginatedQuery({
-    page,
-    limit,
-    lowStockOnly: true,
-  });
+  const { data: lowStockResponse = { data: [], pagination: null }, isLoading } =
+    useGetItemsPaginatedQuery({
+      page,
+      limit,
+      lowStockOnly: true,
+    });
 
   const handlePaginationChange = (nextPage, nextPageSize) => {
     const nextParams = new URLSearchParams(searchParams);

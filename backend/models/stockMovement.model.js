@@ -8,7 +8,7 @@ const stockMovementSchema = new Schema(
       required: true,
     },
     type: {
-      enum: ["IN", "OUT", "ADJUSTMENT"],
+      enum: ["IN", "OUT"],
       type: String,
       required: true,
     },

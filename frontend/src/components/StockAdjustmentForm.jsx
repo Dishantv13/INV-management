@@ -87,10 +87,7 @@ const StockAdjustmentForm = ({
             { required: true, message: "Please select a reference type" },
           ]}
         >
-          <Select
-            placeholder="Select reference type"
-            options={option}
-          />
+          <Select placeholder="Select reference type" options={option} />
         </Form.Item>
 
         <Form.Item name="note" label="Note (Optional)">

@@ -13,12 +13,7 @@ import { STOCK_MOVEMENT } from "../utils/successMessage.js";
 export const updateStock = asyncHandler(async (req, res) => {
   const movementData = req.body;
   const stockMovement = await updateStockService(movementData);
-  successResponse(
-    res,
-    stockMovement,
-    HTTP_STATUS.OK,
-    STOCK_MOVEMENT.UPDATED
-  );
+  successResponse(res, stockMovement, HTTP_STATUS.OK, STOCK_MOVEMENT.UPDATED);
 });
 
 export const addStock = asyncHandler(async (req, res) => {
