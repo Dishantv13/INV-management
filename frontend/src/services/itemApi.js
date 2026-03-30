@@ -33,6 +33,14 @@ export const itemApi = baseApi.injectEndpoints({
       transformResponse: (response) => response?.data,
       invalidatesTags: tagList(TAG_TYPES.ITEMS),
     }),
+    getDashboardStats: builder.query({
+      query: () => ({
+        url: ITEM_URL.DASHBOARD_STATS,
+      }),
+      transformResponse: (response) => response?.data,
+      providesTags: (result) => tagListWithIds(TAG_TYPES.ITEMS, result ? [result] : []),
+    }),
+
   }),
 });
 
@@ -40,4 +48,5 @@ export const {
   useGetItemsQuery,
   useGetItemsPaginatedQuery,
   useCreateItemMutation,
+  useGetDashboardStatsQuery,
 } = itemApi;

@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Card, Select } from "antd";
+import { useEffect, useState } from "react";
+import { Card, Input, Empty } from "antd";
 import { useSearchParams } from "react-router-dom";
 import PageHeaderBar from "../components/PageHeaderBar";
 import StockHistoryTable from "../components/StockHistoryTable";
 import { useGetItemsQuery } from "../services/itemApi";
 import { useStockHistoryQuery } from "../services/stockMovementApi";
+
+const { Search } = Input;
 
 const parsePositiveInt = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
@@ -13,10 +15,11 @@ const parsePositiveInt = (value, fallback) => {
 
 const StockHistoryPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialItemId = searchParams.get("itemId");
   const page = parsePositiveInt(searchParams.get("page")) || 1;
   const limit = parsePositiveInt(searchParams.get("limit")) || 10;
-  const [selectedItemId, setSelectedItemId] = useState(initialItemId || null);
+  const selectedItemId = searchParams.get("itemId") || null;
+  const [searchInput, setSearchInput] = useState("");
+  const [hasNoMatch, setHasNoMatch] = useState(false);
 
   const { data: items = [], isLoading: itemsLoading } = useGetItemsQuery();
   const {
@@ -27,9 +30,40 @@ const StockHistoryPage = () => {
     { refetchOnMountOrArgChange: true },
   );
 
-  const handleItemChange = (value) => {
-    setSelectedItemId(value || null);
-    updateSearchParams(value || null, 1, limit);
+  useEffect(() => {
+    if (!selectedItemId) {
+      setSearchInput("");
+      setHasNoMatch(false);
+      return;
+    }
+
+    const selectedItem = items.find((item) => item._id === selectedItemId);
+    setSearchInput(selectedItem ? selectedItem.name || selectedItem.sku : "");
+    setHasNoMatch(false);
+  }, [selectedItemId, items]);
+
+  const handleSearch = (value) => {
+    const searchValue =
+      typeof value === "string"
+        ? value.trim()
+        : value?.target?.value?.trim() || "";
+    
+    if (!searchValue) {
+      setHasNoMatch(false);
+      updateSearchParams(null, 1, limit);
+      return;
+    }
+
+    const matchedItem = items.find(
+      (item) => item.name.toLowerCase() === searchValue.toLowerCase() || item.sku.toLowerCase() === searchValue.toLowerCase(),
+    );
+    if (matchedItem) {
+      setHasNoMatch(false);
+      updateSearchParams(matchedItem._id, 1, limit);
+    } else {
+      setHasNoMatch(true);
+      updateSearchParams(null, 1, limit);
+    }
   };
 
   const updateSearchParams = (itemId, nextPage = page, nextLimit = limit) => {
@@ -57,30 +91,31 @@ const StockHistoryPage = () => {
         subtitle="View all stock movement logs by item"
       />
       <Card style={{ marginBottom: 16 }}>
-        <Select
-          style={{ width: "100%" }}
+        <Search
           placeholder="Search item to filter history"
-          value={selectedItemId}
-          onChange={handleItemChange}
-          allowClear
+          value={searchInput}
+          onSearch={handleSearch}
           loading={itemsLoading}
-          showSearch
-          optionFilterProp="label"
-          filterOption={(input, option) =>
-            option.label.toLowerCase().includes(input.toLowerCase())
-          }
-          options={items.map((item) => ({
-            value: item._id,
-            label: `${item.name} (${item.sku})`,
-          }))}
+          onChange={(e) => {
+            setSearchInput(e?.target?.value || "");
+            if (!e?.target?.value) {
+              handleSearch("");
+            }
+          }}
+          allowClear
+          style={{ width: 300 }}
         />
       </Card>
-      <StockHistoryTable
-        data={historyResponse.data}
-        loading={historyLoading}
-        pagination={historyResponse.pagination}
-        onPaginationChange={handlePaginationChange}
-      />
+      {hasNoMatch ? (
+        <Empty description="No items found with that name or SKU" />
+      ) : (
+        <StockHistoryTable
+          data={historyResponse.data}
+          loading={historyLoading}
+          pagination={historyResponse.pagination}
+          onPaginationChange={handlePaginationChange}
+        />
+      )}
     </div>
   );
 };

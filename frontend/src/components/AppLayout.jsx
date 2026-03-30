@@ -4,6 +4,7 @@ import {
   DatabaseOutlined,
   HistoryOutlined,
   SwapOutlined,
+  EnvironmentOutlined,
 } from "@ant-design/icons";
 import { Link, useLocation } from "react-router-dom";
 import { ROUTE_URL } from "../enum/url";
@@ -21,6 +22,11 @@ const navigationItems = [
     key: ROUTE_URL.ITEMS,
     icon: <DatabaseOutlined />,
     label: <Link to={ROUTE_URL.ITEMS}>Items</Link>,
+  },
+  {
+    key: ROUTE_URL.LOCATIONS,
+    icon: <EnvironmentOutlined />,
+    label: <Link to={ROUTE_URL.LOCATIONS}>Locations</Link>,
   },
   {
     key: ROUTE_URL.STOCK_ADJUSTMENT,

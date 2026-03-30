@@ -4,6 +4,7 @@ import AppLayout from "./components/AppLayout";
 import ItemListPage from "./pages/ItemListPage";
 import StockAdjustmentPage from "./pages/StockAdjustmentPage";
 import StockHistoryPage from "./pages/StockHistoryPage";
+import LocationsPage from "./pages/LocationsPage";
 import { Navigate } from "react-router-dom";
 import { ROUTE_URL } from "./enum/url";
 
@@ -13,6 +14,7 @@ function App() {
       <Routes>
         <Route path={ROUTE_URL.DASHBOARD} element={<Dashboard />} />
         <Route path={ROUTE_URL.ITEMS} element={<ItemListPage />} />
+        <Route path={ROUTE_URL.LOCATIONS} element={<LocationsPage />} />
         <Route
           path={ROUTE_URL.STOCK_ADJUSTMENT}
           element={<StockAdjustmentPage />}

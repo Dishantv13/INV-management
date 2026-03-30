@@ -5,7 +5,7 @@ import LowStockTable from "../components/LowStockTable";
 import PageHeaderBar from "../components/PageHeaderBar";
 import {
   useGetItemsPaginatedQuery,
-  useGetItemsQuery,
+  useGetDashboardStatsQuery,
 } from "../services/itemApi";
 
 const parsePositiveInt = (value, fallback) => {
@@ -18,7 +18,7 @@ const Dashboard = () => {
   const page = parsePositiveInt(searchParams.get("page"), 1);
   const limit = parsePositiveInt(searchParams.get("limit"), 5);
 
-  const { data: items = [] } = useGetItemsQuery();
+  const { data: dashboardStats } = useGetDashboardStatsQuery();
   const { data: lowStockResponse = { data: [], pagination: null }, isLoading } =
     useGetItemsPaginatedQuery({
       page,
@@ -40,7 +40,7 @@ const Dashboard = () => {
         subtitle="Overview of stock health and key metrics"
       />
 
-      <DashboardCard items={items} />
+      <DashboardCard items={dashboardStats} />
 
       <Row gutter={[16, 16]}>
         <Col span={24}>

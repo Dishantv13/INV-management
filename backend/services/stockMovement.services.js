@@ -84,33 +84,7 @@ export const addStockService = async (movementData) =>
 export const removeStockService = async (movementData) =>
   runStockMovementTransaction({ ...movementData, type: "OUT" });
 
-export const updateStockService = async (movementData) => {
-  const { type } = movementData;
-  if (type === "IN") {
-    return addStockService(movementData);
-  }
-
-  if (type === "OUT") {
-    return removeStockService(movementData);
-  }
-
-  throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid movement type");
-};
-
 const getPaginatedHistory = async (filter = {}, query = {}) => {
-  const usePagination =
-    query.page !== undefined ||
-    query.limit !== undefined ||
-    query.skip !== undefined;
-
-  if (!usePagination) {
-    const history = await StockMovement.find(filter)
-      .populate("itemId", "name sku")
-      .sort({ createdAt: -1 });
-
-    return { data: history, pagination: null };
-  }
-
   const { page, limit, skip } = getPagination({
     page: query.page,
     limit: query.limit,

@@ -2,6 +2,7 @@ import {
   createItemService,
   getAllItemsService,
   getItemByIdService,
+  getDashboardStatsService,
 } from "../services/item.services.js";
 import { HTTP_STATUS } from "../utils/httpCode.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -23,4 +24,9 @@ export const getItemById = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const item = await getItemByIdService(id);
   successResponse(res, item, HTTP_STATUS.OK, ITEM.RETRIEVED);
+});
+
+export const getDashboardStats = asyncHandler(async (req, res) => {
+  const stats = await getDashboardStatsService();
+  successResponse(res, stats, HTTP_STATUS.OK, ITEM.DASHBOARD_STATS_RETRIEVED);
 });

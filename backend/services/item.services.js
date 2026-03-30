@@ -45,10 +45,6 @@ export const createItemService = async (itemData) => {
 
 export const getAllItemsService = async (query = {}) => {
   const filter = {};
-  const usePagination =
-    query.page !== undefined ||
-    query.limit !== undefined ||
-    query.skip !== undefined;
 
   if  (query.lowStockOnly === "true") {
     filter.$expr = { $lte: ["$currentStock", "$lowStockThreshold"] };
@@ -57,17 +53,6 @@ export const getAllItemsService = async (query = {}) => {
   if (query.search) {
     const searchRegex = new RegExp(query.search, "i");
     filter.$or = [{ name: searchRegex }, { sku: searchRegex }];
-  }
-
-  if (!usePagination) {
-    const items = await Item.find(filter).sort({ createdAt: -1 });
-    return {
-      data: items.map((item) => ({
-        ...item.toObject(),
-        isLowStock: item.currentStock <= item.lowStockThreshold,
-      })),
-      pagination: null,
-    };
   }
 
   const { page, limit, skip } = getPagination({
@@ -96,4 +81,19 @@ export const getItemByIdService = async (itemId) => {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, "Item not found");
   }
   return item;
+};
+
+export const getDashboardStatsService = async () => {
+  const items = await Item.find({});
+  const totalItems = items.length;
+  const lowStockItems = items.filter((item) => item.currentStock <= item.lowStockThreshold).length;
+  const totalStockValue = items.reduce((acc, item) => acc + item.price * item.currentStock, 0);
+  const totalStockUnits = items.reduce((acc, item) => acc + item.currentStock, 0);
+
+    return {
+    totalItems,
+    lowStockItems,
+    totalStockValue,
+    totalStockUnits,
+  };
 };

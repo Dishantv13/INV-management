@@ -7,17 +7,6 @@ import {
 } from "@ant-design/icons";
 
 const DashboardCard = ({ items }) => {
-  const lowStockItems = items.filter((item) => item.isLowStock);
-
-  const totalStockValue = items.reduce(
-    (acc, current) => acc + current.price * current.currentStock,
-    0,
-  );
-
-  const totalStockUnits = items.reduce(
-    (acc, current) => acc + current.currentStock,
-    0,
-  );
 
   return (
     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
@@ -25,7 +14,7 @@ const DashboardCard = ({ items }) => {
         <Card bordered={false} hoverable>
           <Statistic
             title="Total Items"
-            value={items.length}
+            value={items?.totalItems || 0}
             prefix={<DatabaseOutlined style={{ color: "#1677ff" }} />}
           />
         </Card>
@@ -35,9 +24,9 @@ const DashboardCard = ({ items }) => {
         <Card bordered={false} hoverable>
           <Statistic
             title="Low Stock Alerts"
-            value={lowStockItems.length}
+            value={items?.lowStockItems || 0}
             valueStyle={{
-              color: lowStockItems.length > 0 ? "#cf1322" : "#3f8600",
+              color: items?.lowStockItems > 0 ? "#cf1322" : "#3f8600",
             }}
             prefix={<WarningOutlined />}
           />
@@ -48,7 +37,7 @@ const DashboardCard = ({ items }) => {
         <Card bordered={false} hoverable>
           <Statistic
             title="Inventory Value"
-            value={totalStockValue}
+            value={items?.totalStockValue || 0}
             precision={2}
             prefix={<ShoppingOutlined style={{ color: "#faad14" }} />}
             suffix="₹"
@@ -60,7 +49,7 @@ const DashboardCard = ({ items }) => {
         <Card bordered={false} hoverable>
           <Statistic
             title="Total Units in Stock"
-            value={totalStockUnits}
+            value={items?.totalStockUnits || 0}
             valueStyle={{ color: "#166534" }}
             prefix={<InboxOutlined />}
           />

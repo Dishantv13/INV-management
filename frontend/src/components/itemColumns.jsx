@@ -69,6 +69,14 @@ export const getItemColumns = ({
     },
   });
 
+  if (showThreshold) {
+    columns.push({
+      title: "Threshold",
+      dataIndex: "lowStockThreshold",
+      key: "lowStockThreshold",
+    });
+  }
+
   if (showLowStockStatus) {
     columns.push({
       title: "Low Stock",
@@ -81,14 +89,6 @@ export const getItemColumns = ({
           <Tag color="success">{healthyStatusLabel}</Tag>
         );
       },
-    });
-  }
-
-  if (showThreshold) {
-    columns.push({
-      title: "Threshold",
-      dataIndex: "lowStockThreshold",
-      key: "lowStockThreshold",
     });
   }
 
