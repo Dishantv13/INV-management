@@ -6,14 +6,21 @@ import { ITEM_URL } from "../enum/url";
 export const itemApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getItems: builder.query({
-      query: () => ({
+      query: ({ page = 1, limit = 1000 } = {}) => ({
         url: ITEM_URL.BASE,
+        params: { page, limit },
       }),
       transformResponse: (response) => response?.data || [],
       providesTags: (result) => tagListWithIds(TAG_TYPES.ITEMS, result || []),
     }),
     getItemsPaginated: builder.query({
-      query: ({ page = 1, limit = 5, skip, search, lowStockOnly = false } = {}) => ({
+      query: ({
+        page = 1,
+        limit = 5,
+        skip,
+        search,
+        lowStockOnly = false,
+      } = {}) => ({
         url: ITEM_URL.BASE,
         params: { page, limit, skip, search, lowStockOnly },
       }),
@@ -38,9 +45,9 @@ export const itemApi = baseApi.injectEndpoints({
         url: ITEM_URL.DASHBOARD_STATS,
       }),
       transformResponse: (response) => response?.data,
-      providesTags: (result) => tagListWithIds(TAG_TYPES.ITEMS, result ? [result] : []),
+      providesTags: (result) =>
+        tagListWithIds(TAG_TYPES.ITEMS, result ? [result] : []),
     }),
-
   }),
 });
 

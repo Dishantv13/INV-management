@@ -1,5 +1,5 @@
 import { Table, Switch, Button, Space, Modal, message } from "antd";
-import { DeleteOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EyeOutlined } from "@ant-design/icons";
 
 const LocationTable = ({
   data,
@@ -8,6 +8,7 @@ const LocationTable = ({
   onPaginationChange,
   onStatusChange,
   onDelete,
+  onViewItems,
   statusLoading,
   deleteLoading,
 }) => {
@@ -62,6 +63,13 @@ const LocationTable = ({
       width: "25%",
       render: (_, record) => (
         <Space>
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => onViewItems?.(record)}
+          >
+            View Items
+          </Button>
           <Button
             type="primary"
             danger

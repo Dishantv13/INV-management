@@ -9,7 +9,6 @@ const itemSchema = new Schema(
     sku: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       uppercase: true,
     },
@@ -27,6 +26,10 @@ const itemSchema = new Schema(
       type: Number,
       default: 5,
     },
+    location: {
+      type: Schema.Types.ObjectId,
+      ref: "Location",
+    },
   },
   { timestamps: true },
 );
@@ -34,5 +37,6 @@ const itemSchema = new Schema(
 itemSchema.virtual("isLowStock").get(function () {
   return this.currentStock <= this.lowStockThreshold;
 });
+itemSchema.index({ sku: 1, location: 1 }, { unique: true });
 
 export const Item = mongoose.model("Item", itemSchema);

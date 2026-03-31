@@ -7,6 +7,11 @@ const stockMovementSchema = new Schema(
       ref: "Item",
       required: true,
     },
+    locationId: {
+      type: Schema.Types.ObjectId,
+      ref: "Location",
+      required: true,
+    },
     type: {
       enum: ["IN", "OUT"],
       type: String,

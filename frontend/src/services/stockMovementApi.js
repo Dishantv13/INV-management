@@ -29,6 +29,15 @@ export const stockMovementApi = baseApi.injectEndpoints({
       invalidatesTags: (result, error, payload) =>
         stockMutationInvalidates(payload?.itemId),
     }),
+    itemStockLocations: builder.query({
+      query: (itemId, status = "active") => ({
+        url: STOCK_URL.LOCATIONS(itemId),
+        params: { status },
+      }),
+      transformResponse: (response) => response?.data || [],
+      providesTags: (result, error, itemId) =>
+        itemId ? tagById(TAG_TYPES.STOCK, itemId) : tagList(TAG_TYPES.STOCK),
+    }),
     stockHistory: builder.query({
       query: ({ itemId, page = 1, limit = 10, skip, search } = {}) => ({
         url: itemId ? STOCK_URL.HISTORY(itemId) : STOCK_URL.HISTORY_ALL,
@@ -49,5 +58,6 @@ export const stockMovementApi = baseApi.injectEndpoints({
 export const {
   useStockInMutation,
   useStockOutMutation,
+  useItemStockLocationsQuery,
   useStockHistoryQuery,
 } = stockMovementApi;

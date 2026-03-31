@@ -13,6 +13,7 @@ export const getItemColumns = ({
   showLowStockStatus = false,
   lowStockStatusLabel = "Low",
   healthyStatusLabel = "OK",
+  showLocation = false,
 } = {}) => {
   const columns = [
     {
@@ -36,6 +37,19 @@ export const getItemColumns = ({
       dataIndex: "price",
       key: "price",
       render: (price) => priceFormatter(price),
+    });
+  }
+
+  if (showLocation) {
+    columns.push({
+      title: "Location",
+      key: "location",
+      render: (_, record) => {
+        if (record?.location && typeof record.location === "object") {
+          return `${record.location.name} (${record.location.locationNo})`;
+        }
+        return "-";
+      },
     });
   }
 
@@ -102,4 +116,14 @@ export const lowStockColumns = getItemColumns({
   showThreshold: true,
   highlightLowStock: true,
   showLowStockStatus: false,
+  showLocation: true,
+});
+
+export const locationStockColumns = getItemColumns({
+  nameTitle: "Item Name",
+  showPrice: false,
+  showSorter: false,
+  showThreshold: true,
+  highlightLowStock: true,
+  showLowStockStatus: true,
 });

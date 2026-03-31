@@ -1,12 +1,6 @@
 import { Modal, Form, Input } from "antd";
 
-const LocationFormModal = ({
-  open,
-  isLoading,
-  onOk,
-  onCancel,
-  form,
-}) => {
+const LocationFormModal = ({ open, isLoading, onOk, onCancel, form }) => {
   return (
     <Modal
       title="Add New Location"

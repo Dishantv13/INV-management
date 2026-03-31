@@ -47,7 +47,7 @@ const StockHistoryPage = () => {
       typeof value === "string"
         ? value.trim()
         : value?.target?.value?.trim() || "";
-    
+
     if (!searchValue) {
       setHasNoMatch(false);
       updateSearchParams(null, 1, limit);
@@ -55,7 +55,9 @@ const StockHistoryPage = () => {
     }
 
     const matchedItem = items.find(
-      (item) => item.name.toLowerCase() === searchValue.toLowerCase() || item.sku.toLowerCase() === searchValue.toLowerCase(),
+      (item) =>
+        item.name.toLowerCase() === searchValue.toLowerCase() ||
+        item.sku.toLowerCase() === searchValue.toLowerCase(),
     );
     if (matchedItem) {
       setHasNoMatch(false);

@@ -1,14 +1,10 @@
-import { useState } from "react";
-import { Button, Card, message } from "antd";
+import { Button, Card } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { useSearchParams } from "react-router-dom";
-import AddItemModal from "../components/AddItemModel";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import ItemTable from "../components/ItemTable";
 import PageHeaderBar from "../components/PageHeaderBar";
-import {
-  useCreateItemMutation,
-  useGetItemsPaginatedQuery,
-} from "../services/itemApi";
+import { useGetItemsPaginatedQuery } from "../services/itemApi";
+import { ROUTE_URL } from "../enum/url";
 
 const parsePositiveInt = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
@@ -17,15 +13,13 @@ const parsePositiveInt = (value, fallback) => {
 
 const ItemListPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const page = parsePositiveInt(searchParams.get("page")) || 1;
   const limit = parsePositiveInt(searchParams.get("limit")) || 10;
   const search = searchParams.get("search") || "";
 
-  const [messageApi, contextHolder] = message.useMessage();
-  const [openAddModal, setOpenAddModal] = useState(false);
   const { data: itemResponse = { data: [], pagination: null }, isLoading } =
     useGetItemsPaginatedQuery({ page, limit, search });
-  const [createItem, { isLoading: isCreating }] = useCreateItemMutation();
 
   const handlePaginationChange = (nextPage, nextPageSize) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -36,7 +30,9 @@ const ItemListPage = () => {
 
   const handleSearchChange = (value) => {
     const searchValue =
-      typeof value === "string" ? value.trim() : value?.target?.value?.trim() || "";
+      typeof value === "string"
+        ? value.trim()
+        : value?.target?.value?.trim() || "";
     const nextParams = new URLSearchParams(searchParams);
     if (searchValue) {
       nextParams.set("search", searchValue);
@@ -47,19 +43,8 @@ const ItemListPage = () => {
     setSearchParams(nextParams);
   };
 
-  const handleAddItem = async (payload) => {
-    try {
-      await createItem(payload).unwrap();
-      messageApi.success("Item created successfully");
-      setOpenAddModal(false);
-    } catch (error) {
-      messageApi.error(error?.data?.message || "Failed to create item");
-    }
-  };
-
   return (
     <div>
-      {contextHolder}
       <PageHeaderBar
         title="Item List"
         subtitle="Manage inventory items and monitor stock levels"
@@ -70,7 +55,7 @@ const ItemListPage = () => {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => setOpenAddModal(true)}
+            onClick={() => navigate(ROUTE_URL.ITEM_ADD)}
           >
             Add Item
           </Button>
@@ -85,13 +70,6 @@ const ItemListPage = () => {
           onPaginationChange={handlePaginationChange}
         />
       </Card>
-
-      <AddItemModal
-        open={openAddModal}
-        loading={isCreating}
-        onCancel={() => setOpenAddModal(false)}
-        onSubmit={handleAddItem}
-      />
     </div>
   );
 };

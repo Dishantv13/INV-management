@@ -14,9 +14,20 @@ export const locationApi = baseApi.injectEndpoints({
       invalidatesTags: tagList(TAG_TYPES.LOCATIONS),
     }),
     getLocations: builder.query({
-      query: ({ page = 1, limit = 10 } = {}) => ({
+      query: ({ page = 1, limit = 10, search, status } = {}) => ({
         url: LOCATION_URL.BASE,
-        params: { page, limit },
+        params: { page, limit, search, status },
+      }),
+      transformResponse: (response) => ({
+        data: response?.data || [],
+        pagination: response?.pagination || null,
+      }),
+      providesTags: (result) => tagList(TAG_TYPES.LOCATIONS),
+    }),
+    getActiveLocations: builder.query({
+      query: ({ page = 1, limit = 1000, search } = {}) => ({
+        url: LOCATION_URL.BASE,
+        params: { page, limit, search, status: "active" },
       }),
       transformResponse: (response) => ({
         data: response?.data || [],
@@ -31,6 +42,20 @@ export const locationApi = baseApi.injectEndpoints({
       transformResponse: (response) => response?.data,
       providesTags: (result, error, locationId) =>
         tagById(TAG_TYPES.LOCATIONS, locationId),
+    }),
+    getLocationItems: builder.query({
+      query: ({ locationId, page = 1, limit = 10 } = {}) => ({
+        url: LOCATION_URL.ITEMS(locationId),
+        params: { page, limit },
+      }),
+      transformResponse: (response) => ({
+        data: response?.data || [],
+        pagination: response?.pagination || null,
+      }),
+      providesTags: (result, error, locationId) => [
+        ...tagById(TAG_TYPES.LOCATIONS, locationId),
+        ...tagList(TAG_TYPES.ITEMS),
+      ],
     }),
     updateLocationStatus: builder.mutation({
       query: ({ locationId, status }) => ({
@@ -55,7 +80,9 @@ export const locationApi = baseApi.injectEndpoints({
 
 export const {
   useGetLocationsQuery,
+  useGetActiveLocationsQuery,
   useGetLocationByIdQuery,
+  useLazyGetLocationItemsQuery,
   useCreateLocationMutation,
   useUpdateLocationStatusMutation,
   useDeleteLocationMutation,

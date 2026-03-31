@@ -3,10 +3,12 @@ import { useEffect } from "react";
 
 const StockAdjustmentForm = ({
   items,
+  itemLocations,
   loading,
   onSubmit,
   selectedItemId,
   onItemChange,
+  locationsLoading,
 }) => {
   const [form] = Form.useForm();
 
@@ -20,6 +22,7 @@ const StockAdjustmentForm = ({
   useEffect(() => {
     if (selectedItemId) {
       form.setFieldValue("itemId", selectedItemId);
+      form.setFieldValue("locationId", undefined);
     }
   }, [form, selectedItemId]);
 
@@ -50,10 +53,35 @@ const StockAdjustmentForm = ({
         >
           <Select
             placeholder="Choose item"
-            onChange={(value) => onItemChange?.(value)}
+            onChange={(value) => {
+              form.setFieldValue("locationId", undefined);
+              onItemChange?.(value);
+            }}
             options={items.map((item) => ({
               value: item._id,
               label: `${item.name} (${item.sku}) (Current: ${item.currentStock})`,
+            }))}
+            showSearch
+            optionFilterProp="label"
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="locationId"
+          label="Select Location"
+          rules={[{ required: true, message: "Please select a location" }]}
+        >
+          <Select
+            placeholder={
+              selectedItemId
+                ? "Choose location"
+                : "Select an item first to load locations"
+            }
+            disabled={!selectedItemId}
+            loading={locationsLoading}
+            options={itemLocations.map((location) => ({
+              value: location.locationId,
+              label: `${location.name} (${location.locationNo}) (Current: ${location.currentStock})`,
             }))}
             showSearch
             optionFilterProp="label"

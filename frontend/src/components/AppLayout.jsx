@@ -19,14 +19,14 @@ const navigationItems = [
     label: <Link to={ROUTE_URL.DASHBOARD}>Dashboard</Link>,
   },
   {
-    key: ROUTE_URL.ITEMS,
-    icon: <DatabaseOutlined />,
-    label: <Link to={ROUTE_URL.ITEMS}>Items</Link>,
-  },
-  {
     key: ROUTE_URL.LOCATIONS,
     icon: <EnvironmentOutlined />,
     label: <Link to={ROUTE_URL.LOCATIONS}>Locations</Link>,
+  },
+  {
+    key: ROUTE_URL.ITEMS,
+    icon: <DatabaseOutlined />,
+    label: <Link to={ROUTE_URL.ITEMS}>Items</Link>,
   },
   {
     key: ROUTE_URL.STOCK_ADJUSTMENT,
@@ -43,8 +43,9 @@ const navigationItems = [
 const AppLayout = ({ children }) => {
   const { pathname } = useLocation();
 
-  const selectedKey =
-    navigationItems.find((item) => pathname === item.key)?.key || "/";
+  const selectedKey = navigationItems.find((item) => {
+    return pathname === item.key || pathname.startsWith(item.key + "/");
+  })?.key || "/";
 
   return (
     <Layout className="app-shell">

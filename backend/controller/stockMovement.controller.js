@@ -1,6 +1,7 @@
 import {
   addStockService,
   getAllStockHistoryServices,
+  getItemStockLocationsService,
   removeStockService,
   getStockHistoryServices,
 } from "../services/stockMovement.services.js";
@@ -41,5 +42,16 @@ export const getAllStockHistory = asyncHandler(async (req, res) => {
     HTTP_STATUS.OK,
     STOCK_MOVEMENT.HISTORY_RETRIEVED,
     pagination,
+  );
+});
+
+export const getItemStockLocations = asyncHandler(async (req, res) => {
+  const { itemId } = req.params;
+  const locations = await getItemStockLocationsService(itemId);
+  successResponse(
+    res,
+    locations,
+    HTTP_STATUS.OK,
+    STOCK_MOVEMENT.HISTORY_RETRIEVED,
   );
 });

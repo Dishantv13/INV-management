@@ -30,6 +30,16 @@ const StockHistoryTable = ({
       },
     },
     {
+      title: "Location",
+      key: "location",
+      render: (_, record) => {
+        if (record?.locationId && typeof record.locationId === "object") {
+          return `${record.locationId.name} (${record.locationId.locationNo})`;
+        }
+        return "-";
+      },
+    },
+    {
       title: "Quantity",
       dataIndex: "quantity",
       key: "quantity",
