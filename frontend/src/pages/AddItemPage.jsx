@@ -1,17 +1,18 @@
-import { useEffect, useMemo } from "react";
-import { ArrowLeftOutlined } from "@ant-design/icons";
-import { Button, Card, Form, Input, InputNumber, message, Select, Space } from "antd";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useCallback, useMemo } from "react";
+import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { Button, Card, Divider, Form, Input, InputNumber, message, Select, Space, Typography } from "antd";
+import { useNavigate } from "react-router-dom";
 import PageHeaderBar from "../components/PageHeaderBar";
 import { ROUTE_URL } from "../enum/url";
 import { useCreateItemMutation } from "../services/itemApi";
 import { useGetActiveLocationsQuery } from "../services/locationApi";
 
+const { Title } = Typography;
+
 const AddItemPage = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const [createItem, { isLoading: isCreating }] = useCreateItemMutation();
   const {
@@ -19,7 +20,7 @@ const AddItemPage = () => {
     isLoading: isLocationsLoading,
   } = useGetActiveLocationsQuery();
 
-  const locationOptions = useMemo(
+  const allLocationOptions = useMemo(
     () =>
       locationResponse.data
         .filter((location) => location.status === "active")
@@ -30,44 +31,41 @@ const AddItemPage = () => {
     [locationResponse.data],
   );
 
-  useEffect(() => {
-    const locationParam = searchParams.get("locations");
-    if (locationParam) {
-      const locationIds = locationParam.split(",").filter((id) => id);
-      form.setFieldValue("locations", locationIds);
-    }
-  }, []);
-
-  const handleLocationsChange = (selectedLocations) => {
-    if (selectedLocations && selectedLocations.length > 0) {
-      setSearchParams({ locations: selectedLocations.join(",") });
-    } else {
-      setSearchParams({});
-    }
+  const getAvailableOptions = (currentIndex) => {
+    const locationRows = form.getFieldValue("locationRows") || [];
+    const selectedIds = locationRows
+      .map((row, idx) => (idx !== currentIndex ? row?.location : null))
+      .filter(Boolean);
+    return allLocationOptions.filter((opt) => !selectedIds.includes(opt.value));
   };
 
-  const handleSubmit = async (values) => {
-    const {
-      locations = [],
-      name,
-      sku,
-      price,
-      currentStock,
-      lowStockThreshold,
-    } = values;
+  const locationRows = Form.useWatch("locationRows", form) || [];
+  const allLocationsUsed = useMemo(
+    () =>
+      allLocationOptions.length > 0 &&
+      locationRows.length >= allLocationOptions.length,
+    [allLocationOptions.length, locationRows.length],
+  );
 
-    if (locations.length === 0) {
-      messageApi.error("Please select at least one location");
+  const handleLocationChange = useCallback(() => {
+    form.validateFields();
+  }, [form]);
+
+  const handleSubmit = async (values) => {
+    const { locationRows = [], name, sku, price, lowStockThreshold } = values;
+
+    if (locationRows.length === 0) {
+      messageApi.error("Please add at least one location");
       return;
     }
 
     const results = await Promise.allSettled(
-      locations.map((location) =>
+      locationRows.map(({ location, quantity }) =>
         createItem({
           name,
           sku,
           price,
-          currentStock,
+          currentStock: quantity,
           lowStockThreshold,
           location,
         }).unwrap(),
@@ -84,7 +82,7 @@ const AddItemPage = () => {
 
     if (failedCount === 0) {
       messageApi.success(
-        `Item created in ${locations.length} location(s) successfully`,
+        `Item created in ${locationRows.length} location(s) successfully`,
       );
       navigate(ROUTE_URL.ITEMS);
       return;
@@ -106,7 +104,7 @@ const AddItemPage = () => {
       {contextHolder}
       <PageHeaderBar
         title="Add Item"
-        subtitle="Create one item and add it to multiple locations"
+        subtitle="Create one item and add it to multiple locations with individual quantities"
         rightNode={
           <Button
             icon={<ArrowLeftOutlined />}
@@ -124,41 +122,18 @@ const AddItemPage = () => {
           onFinish={handleSubmit}
           initialValues={{
             lowStockThreshold: 5,
-            currentStock: 0,
+            locationRows: [{ location: undefined, quantity: 0 }],
           }}
         >
-          <Form.Item
-            name="locations"
-            label="Locations"
-            rules={[
-              {
-                required: true,
-                message: "Please select at least one location!",
-              },
-            ]}
-          >
-            <Select
-              mode="multiple"
-              showSearch
-              allowClear
-              loading={isLocationsLoading}
-              placeholder="Search and select one or more locations"
-              options={locationOptions}
-              optionFilterProp="label"
-              onChange={handleLocationsChange}
-              filterOption={(input, option) =>
-                (option?.label ?? "")
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
-              }
-              notFoundContent="No locations found"
-            />
-          </Form.Item>
+          <Title level={5} style={{ marginTop: 0, marginBottom: 16 }}>
+            Item Details
+          </Title>
 
-          <Space size="large" wrap>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <Form.Item
               name="name"
               label="Item Name"
+              style={{ flex: "1 1 200px" }}
               rules={[
                 {
                   required: true,
@@ -172,6 +147,7 @@ const AddItemPage = () => {
             <Form.Item
               name="sku"
               label="SKU ID"
+              style={{ flex: "1 1 160px" }}
               rules={[
                 {
                   required: true,
@@ -185,25 +161,11 @@ const AddItemPage = () => {
             >
               <Input placeholder="e.g. APPLE-MBP-M3" />
             </Form.Item>
-          </Space>
-
-          <div style={{ display: "flex", gap: 16 }}>
-            <Form.Item
-              name="currentStock"
-              label="Stock Quantity"
-              rules={[
-                {
-                  required: true,
-                  message: "Please input the stock quantity!",
-                },
-              ]}
-            >
-              <InputNumber style={{ width: "100%" }} min={0} />
-            </Form.Item>
 
             <Form.Item
               name="price"
               label="Unit Price (Rs.)"
+              style={{ flex: "1 1 140px" }}
               rules={[
                 {
                   required: true,
@@ -220,7 +182,6 @@ const AddItemPage = () => {
                   },
                 },
               ]}
-              style={{ flex: 1 }}
             >
               <InputNumber style={{ width: "100%" }} precision={2} min={0.01} />
             </Form.Item>
@@ -228,17 +189,119 @@ const AddItemPage = () => {
             <Form.Item
               name="lowStockThreshold"
               label="Low Stock Threshold"
+              style={{ flex: "1 1 140px" }}
               rules={[
                 {
                   required: true,
                   message: "Please input threshold!",
                 },
               ]}
-              style={{ flex: 1 }}
             >
               <InputNumber style={{ width: "100%" }} min={0} />
             </Form.Item>
           </div>
+
+          <Divider />
+
+          <Title level={5} style={{ marginTop: 0, marginBottom: 16 }}>
+            Locations & Quantities
+          </Title>
+
+          <Form.List
+            name="locationRows"
+            rules={[
+              {
+                validator: async (_, rows) => {
+                  if (!rows || rows.length === 0) {
+                    return Promise.reject(
+                      new Error("Please add at least one location"),
+                    );
+                  }
+                },
+              },
+            ]}
+          >
+            {(fields, { add, remove }, { errors }) => (
+              <>
+                {fields.map(({ key, name: fieldName, ...restField }, index) => (
+                  <div
+                    key={key}
+                    style={{
+                      display: "flex",
+                      gap: 12,
+                      alignItems: "flex-start",
+                      marginBottom: 4,
+                    }}
+                  >
+                    <Form.Item
+                      {...restField}
+                      name={[fieldName, "location"]}
+                      label={index === 0 ? "Location" : ""}
+                      style={{ flex: 2, minWidth: 200 }}
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please select a location",
+                        },
+                      ]}
+                    >
+                      <Select
+                        showSearch
+                        allowClear
+                        loading={isLocationsLoading}
+                        placeholder="Select a location"
+                        options={getAvailableOptions(index)}
+                        optionFilterProp="label"
+                        filterOption={(input, option) =>
+                          (option?.label ?? "")
+                            .toLowerCase()
+                            .includes(input.toLowerCase())
+                        }
+                        notFoundContent="No locations available"
+                        onChange={handleLocationChange}
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      {...restField}
+                      name={[fieldName, "quantity"]}
+                      label={index === 0 ? "Quantity" : ""}
+                      style={{ flex: 1, minWidth: 100 }}
+                      rules={[
+                        {
+                          required: true,
+                          message: "Required",
+                        },
+                      ]}
+                    >
+                      <InputNumber style={{ width: "100%" }} min={0} />
+                    </Form.Item>
+
+                    <Form.Item label={index === 0 ? " " : ""} colon={false}>
+                      <Button
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={() => remove(fieldName)}
+                        disabled={fields.length === 1}
+                      />
+                    </Form.Item>
+                  </div>
+                ))}
+
+                <Form.Item>
+                  <Button
+                    type="dashed"
+                    onClick={() => add({ location: undefined, quantity: 0 })}
+                    icon={<PlusOutlined />}
+                    disabled={allLocationsUsed}
+                  >
+                    Add Location
+                  </Button>
+                  <Form.ErrorList errors={errors} />
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
 
           <Space>
             <Button onClick={() => navigate(ROUTE_URL.ITEMS)}>Cancel</Button>
