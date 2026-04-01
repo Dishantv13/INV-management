@@ -1,81 +1,118 @@
 import { message } from "antd";
-import { useSearchParams } from "react-router-dom";
 import PageHeaderBar from "../components/PageHeaderBar";
 import StockAdjustmentForm from "../components/StockAdjustmentForm";
-import { useGetItemsQuery } from "../services/itemApi";
 import {
-  useItemStockLocationsQuery,
   useStockInMutation,
   useStockOutMutation,
 } from "../services/stockMovementApi";
+import {
+  useGetActiveLocationsQuery,
+  useLazyGetLocationItemsQuery,
+} from "../services/locationApi";
 
 const StockAdjustmentPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const selectedItemId = searchParams.get("itemId") || undefined;
-  const { data: items = [], isLoading: itemsLoading } = useGetItemsQuery({ page: 1, limit: 1000 });
-  const { data: itemLocations = [], isLoading: locationsLoading } =
-    useItemStockLocationsQuery(selectedItemId, {
-      skip: !selectedItemId,
-    });
+
+  const {
+    data: locationsResponse = { data: [] },
+    isLoading: locationsLoading,
+  } = useGetActiveLocationsQuery({ page: 1, limit: 1000 });
+  const [fetchLocationItems, { data: locationItemsResponse, isFetching: isItemsFetching }] =
+    useLazyGetLocationItemsQuery();
+
   const [stockIn, { isLoading: isStockInLoading }] = useStockInMutation();
   const [stockOut, { isLoading: isStockOutLoading }] = useStockOutMutation();
-  const handleItemChange = (itemId) => {
-    const nextParams = new URLSearchParams(searchParams);
 
-    if (itemId) {
-      nextParams.set("itemId", itemId);
-    } else {
-      nextParams.delete("itemId");
+  const handleLocationChange = async (locationId) => {
+    if (!locationId) {
+      return;
     }
 
-    setSearchParams(nextParams, { replace: true });
+    try {
+      await fetchLocationItems({
+        locationId,
+        page: 1,
+        limit: 1000,
+      }).unwrap();
+    } catch {
+      messageApi.error("Failed to load items for selected location");
+    }
   };
 
-  const handleSubmit = async (values) => {
-    const payload = {
-      itemId: values.itemId,
-      locationId: values.locationId,
-      quantity: Number(values.quantity),
-      reference: values.reference,
-      note: values.note,
-    };
+  const handleSubmit = async ({ locationId, reference, note, adjustments = [] }) => {
+    const validAdjustments = adjustments.filter((row) => row?.itemId);
+
+    if (validAdjustments.length === 0) {
+      messageApi.error("Please add at least one item adjustment");
+      return false;
+    }
+
+    const results = await Promise.allSettled(
+      validAdjustments.map((row) => {
+        const payload = {
+          itemId: row.itemId,
+          locationId,
+          quantity: Number(row.quantity),
+          reference,
+          note,
+        };
+
+        return row.type === "IN"
+          ? stockIn(payload).unwrap()
+          : stockOut(payload).unwrap();
+      }),
+    );
+
+    const successCount = results.filter(
+      (result) => result.status === "fulfilled",
+    ).length;
+    const failCount = results.length - successCount;
 
     try {
-      if (values.type === "IN") {
-        await stockIn(payload).unwrap();
-      } else {
-        await stockOut(payload).unwrap();
+      if (successCount > 0 && failCount === 0) {
+        messageApi.success(
+          `${successCount} item adjustment(s) applied successfully`,
+        );
+        await fetchLocationItems({ locationId, page: 1, limit: 1000 }).unwrap();
+        return true;
       }
-      messageApi.success(
-        `variation ${values.type === "IN" ? "added to" : "removed from"} stock successfully`,
+
+      if (successCount > 0) {
+        messageApi.warning(
+          `${successCount} succeeded and ${failCount} failed. Please review and retry failed rows.`,
+        );
+        await fetchLocationItems({ locationId, page: 1, limit: 1000 }).unwrap();
+        return false;
+      }
+
+      const firstError = results.find((result) => result.status === "rejected");
+      messageApi.error(
+        firstError?.reason?.data?.message || "Stock update failed",
       );
-      return true;
-    } catch (error) {
-      messageApi.error(error?.data?.message || "Stock update failed");
+      return false;
+    } catch {
       return false;
     }
   };
 
   const loading =
-    itemsLoading || locationsLoading || isStockInLoading || isStockOutLoading;
+    locationsLoading || isItemsFetching || isStockInLoading || isStockOutLoading;
 
   return (
     <div>
       {contextHolder}
       <PageHeaderBar
         title="Stock Adjustment"
-        subtitle="Add or remove stock through movement entries"
+        subtitle="Select location, then adjust multiple items in one submit"
       />
       <StockAdjustmentForm
-        items={items}
-        itemLocations={itemLocations}
+        locations={locationsResponse.data}
+        locationItems={locationItemsResponse?.data || []}
         loading={loading}
+        itemsLoading={isItemsFetching}
         locationsLoading={locationsLoading}
         onSubmit={handleSubmit}
-        selectedItemId={selectedItemId}
-        onItemChange={handleItemChange}
-        pagination={false}
+        onLocationChange={handleLocationChange}
       />
     </div>
   );

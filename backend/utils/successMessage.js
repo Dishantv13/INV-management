@@ -7,6 +7,7 @@ export const ITEM = {
 export const STOCK_MOVEMENT = {
     UPDATED: "Stock updated successfully",
     HISTORY_RETRIEVED: "Stock history retrieved successfully",
+    ITEMS_RETRIEVED: "Location items retrieved successfully",
 }
 
 export const LOCATION = {

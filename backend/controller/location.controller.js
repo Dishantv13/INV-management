@@ -2,9 +2,10 @@ import {
   createLocationService,
   getAllLocationsService,
   getLocationByIdService,
-  getLocationItemsService,
   updateLocationStatusService,
   deleteLocationService,
+  getLocationItemService,
+  getLocationItemsMovementService,
 } from "../services/location.services.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { successResponse } from "../utils/response.js";
@@ -28,12 +29,6 @@ export const getLocationById = asyncHandler(async (req, res) => {
   successResponse(res, location, HTTP_STATUS.OK, LOCATION.RETRIEVED);
 });
 
-export const getLocationItems = asyncHandler(async (req, res) => {
-  const { locationId } = req.params;
-  const { data, pagination } = await getLocationItemsService(locationId, req.query);
-  successResponse(res, data, HTTP_STATUS.OK, LOCATION.RETRIEVED, pagination);
-});
-
 export const updateLocationStatus = asyncHandler(async (req, res) => {
   const { locationId } = req.params;
   const { status } = req.body;
@@ -46,4 +41,22 @@ export const deleteLocation = asyncHandler(async (req, res) => {
 
   await deleteLocationService(locationId);
   successResponse(res, null, HTTP_STATUS.OK, LOCATION.DELETED);
+});
+
+export const getItemsByLocation = asyncHandler(async (req, res) => {
+  const { locationId } = req.params;
+  const { data, pagination } = await getLocationItemService(
+    locationId,
+    req.query,
+  );
+  successResponse(res, data, HTTP_STATUS.OK, LOCATION.RETRIEVED, pagination);
+});
+
+export const getLocationItemsMovement = asyncHandler(async (req, res) => {
+  const { locationId } = req.params;
+  const { data, pagination } = await getLocationItemsMovementService(
+    locationId,
+    req.query,
+  );
+  successResponse(res, data, HTTP_STATUS.OK, LOCATION.RETRIEVED, pagination);
 });

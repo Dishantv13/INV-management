@@ -6,6 +6,7 @@ import StockAdjustmentPage from "./pages/StockAdjustmentPage";
 import StockHistoryPage from "./pages/StockHistoryPage";
 import LocationsPage from "./pages/LocationsPage";
 import AddItemPage from "./pages/AddItemPage.jsx";
+import LocationItemsPage from "./pages/LocationItemsPage.jsx";
 import { Navigate } from "react-router-dom";
 import { ROUTE_URL } from "./enum/url";
 
@@ -17,6 +18,10 @@ function App() {
         <Route path={ROUTE_URL.ITEMS} element={<ItemListPage />} />
         <Route path={ROUTE_URL.ITEM_ADD} element={<AddItemPage />} />
         <Route path={ROUTE_URL.LOCATIONS} element={<LocationsPage />} />
+        <Route
+          path={ROUTE_URL.LOCATION_ITEMS()}
+          element={<LocationItemsPage />}
+        />
         <Route
           path={ROUTE_URL.STOCK_ADJUSTMENT}
           element={<StockAdjustmentPage />}

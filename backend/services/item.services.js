@@ -10,9 +10,13 @@ export const createItemService = async (itemData) => {
   const { name, sku, price, currentStock, lowStockThreshold, location } =
     itemData;
 
+  if (!mongoose.Types.ObjectId.isValid(location)) {
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid location ID format");
+  }
+
   const locationExists = await Location.findById(location);
-  if (!locationExists || !mongoose.Types.ObjectId.isValid(location)) {
-    throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid location ID");
+  if (!locationExists) {
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, "Location not found");
   }
   if (locationExists.status !== "active") {
     throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Location is not active");

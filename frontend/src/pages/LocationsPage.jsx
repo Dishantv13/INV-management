@@ -1,30 +1,25 @@
 import { useState } from "react";
 import { Form, message, Button } from "antd";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import PageHeaderBar from "../components/PageHeaderBar";
 import LocationFormModal from "../components/LocationFormModal";
 import LocationTable from "../components/LocationTable";
-import ViewLocationItem from "../components/ViewLocationItem";
-import { locationStockColumns } from "../components/itemColumns";
 import {
   useGetLocationsQuery,
-  useLazyGetLocationItemsQuery,
   useCreateLocationMutation,
   useUpdateLocationStatusMutation,
   useDeleteLocationMutation,
 } from "../services/locationApi";
+import { ROUTE_URL } from "../enum/url";
 
 const LocationsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [form] = Form.useForm();
 
   const page = parseInt(searchParams.get("page")) || 1;
   const limit = parseInt(searchParams.get("limit")) || 10;
-  const itemPage = parseInt(searchParams.get("itemPage")) || 1;
-  const itemLimit = parseInt(searchParams.get("itemLimit")) || 10;
   const search = searchParams.get("search") || "";
 
   const {
@@ -38,18 +33,6 @@ const LocationsPage = () => {
     useUpdateLocationStatusMutation();
   const [deleteLocation, { isLoading: deleteLoading }] =
     useDeleteLocationMutation();
-  const [
-    triggerGetLocationItems,
-    {
-      data: locationItems = { data: [], pagination: null },
-      isFetching: locationItemsLoading,
-    },
-  ] = useLazyGetLocationItemsQuery({
-    itemPage,
-    itemLimit,
-  });
-
-  const itemColumns = locationStockColumns;
 
   const handleAddLocation = async () => {
     try {
@@ -88,6 +71,8 @@ const LocationsPage = () => {
       const nextParams = new URLSearchParams(prev);
       nextParams.set("page", newPage.toString());
       nextParams.set("limit", newPageSize.toString());
+      nextParams.delete("itemPage");
+      nextParams.delete("itemLimit");
       return nextParams;
     });
   };
@@ -97,18 +82,8 @@ const LocationsPage = () => {
     form.resetFields();
   };
 
-  const handleViewItems = async (location) => {
-    setSelectedLocation(location);
-    setViewModalOpen(true);
-    try {
-      await triggerGetLocationItems({
-        locationId: location._id,
-        page: itemPage,
-        limit: itemLimit,
-      }).unwrap();
-    } catch (error) {
-      message.error(error?.data?.message || "Failed to load location items");
-    }
+  const handleViewItems = (location) => {
+    navigate(ROUTE_URL.LOCATION_ITEMS(location._id));
   };
 
   const handleSearchChange = (value) => {
@@ -123,28 +98,9 @@ const LocationsPage = () => {
       nextParams.delete("search");
     }
     nextParams.set("page", "1");
+    nextParams.delete("itemPage");
+    nextParams.delete("itemLimit");
     setSearchParams(nextParams);
-  };
-
-  const handleItemPaginationChange = async (newPage, newPageSize) => {
-    setSearchParams((prev) => {
-      const nextParams = new URLSearchParams(prev);
-      nextParams.set("itemPage", newPage.toString());
-      nextParams.set("itemLimit", newPageSize.toString());
-      return nextParams;
-    });
-
-    if (!selectedLocation) return;
-
-    try {
-      await triggerGetLocationItems({
-        locationId: selectedLocation._id,
-        page: newPage,
-        limit: newPageSize,
-      }).unwrap();
-    } catch (error) {
-      message.error(error?.data?.message || "Failed to load location items");
-    }
   };
 
   return (
@@ -154,6 +110,7 @@ const LocationsPage = () => {
         subtitle="Manage warehouse and storage locations"
         showSearch
         onSearch={handleSearchChange}
+        defaultSearchValue={search}
         rightNode={
           <Button type="primary" onClick={() => setIsModalOpen(true)}>
             Add Location
@@ -179,19 +136,6 @@ const LocationsPage = () => {
         onViewItems={handleViewItems}
         statusLoading={statusLoading}
         deleteLoading={deleteLoading}
-      />
-
-      <ViewLocationItem
-        open={viewModalOpen}
-        onCancel={() => setViewModalOpen(false)}
-        title={`Items in ${selectedLocation?.name || "Location"}`}
-        data={locationItems.data}
-        loading={locationItemsLoading}
-        columns={itemColumns}
-        emptyText="No items found in this location"
-        entityName="items"
-        pagination={locationItems.pagination}
-        onPaginationChange={handleItemPaginationChange}
       />
     </div>
   );

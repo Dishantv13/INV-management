@@ -1,8 +1,16 @@
-import { useEffect, useMemo } from "react";
-import { ArrowLeftOutlined } from "@ant-design/icons";
-import { Button, Card, Form, Input, InputNumber, message, Select, Space } from "antd";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useMemo } from "react";
+import {
+  ArrowLeftOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
+  Card,
+  Form,
+  message,
+} from "antd";
+import { useNavigate } from "react-router-dom";
 import PageHeaderBar from "../components/PageHeaderBar";
+import ItemForm from "../components/ItemForm";
 import { ROUTE_URL } from "../enum/url";
 import { useCreateItemMutation } from "../services/itemApi";
 import { useGetActiveLocationsQuery } from "../services/locationApi";
@@ -11,7 +19,6 @@ const AddItemPage = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const [createItem, { isLoading: isCreating }] = useCreateItemMutation();
   const {
@@ -30,46 +37,38 @@ const AddItemPage = () => {
     [locationResponse.data],
   );
 
-  useEffect(() => {
-    const locationParam = searchParams.get("locations");
-    if (locationParam) {
-      const locationIds = locationParam.split(",").filter((id) => id);
-      form.setFieldValue("locations", locationIds);
-    }
-  }, []);
+  const getAvailableLocations = (allRows = [], currentIndex) => {
+    const selectedByOtherRows = allRows
+      .filter((_, index) => index !== currentIndex)
+      .map((row) => row?.location)
+      .filter(Boolean);
 
-  const handleLocationsChange = (selectedLocations) => {
-    if (selectedLocations && selectedLocations.length > 0) {
-      setSearchParams({ locations: selectedLocations.join(",") });
-    } else {
-      setSearchParams({});
-    }
+    const currentLocation = allRows?.[currentIndex]?.location;
+
+    return locationOptions.filter(
+      (option) =>
+        option.value === currentLocation ||
+        !selectedByOtherRows.includes(option.value),
+    );
   };
 
   const handleSubmit = async (values) => {
-    const {
-      locations = [],
-      name,
-      sku,
-      price,
-      currentStock,
-      lowStockThreshold,
-    } = values;
+    const { initialStocks = [], name, sku, price, lowStockThreshold } = values;
 
-    if (locations.length === 0) {
-      messageApi.error("Please select at least one location");
+    if (initialStocks.length === 0) {
+      messageApi.error("Please add at least one location with quantity");
       return;
     }
 
     const results = await Promise.allSettled(
-      locations.map((location) =>
+      initialStocks.map((stock) =>
         createItem({
           name,
           sku,
           price,
-          currentStock,
+          currentStock: Number(stock.quantity),
           lowStockThreshold,
-          location,
+          location: stock.location,
         }).unwrap(),
       ),
     );
@@ -84,7 +83,7 @@ const AddItemPage = () => {
 
     if (failedCount === 0) {
       messageApi.success(
-        `Item created in ${locations.length} location(s) successfully`,
+        `Item created in ${initialStocks.length} location(s) successfully`,
       );
       navigate(ROUTE_URL.ITEMS);
       return;
@@ -106,7 +105,7 @@ const AddItemPage = () => {
       {contextHolder}
       <PageHeaderBar
         title="Add Item"
-        subtitle="Create one item and add it to multiple locations"
+        subtitle="Create one item and set initial stock by location"
         rightNode={
           <Button
             icon={<ArrowLeftOutlined />}
@@ -116,137 +115,20 @@ const AddItemPage = () => {
           </Button>
         }
       />
-
       <Card>
-        <Form
+        <ItemForm
           form={form}
-          layout="vertical"
           onFinish={handleSubmit}
+          isLoading={isCreating}
+          isLocationsLoading={isLocationsLoading}
+          getAvailableLocations={getAvailableLocations}
+          onCancel={() => navigate(ROUTE_URL.ITEMS)}
+          submitText="Create Item"
           initialValues={{
             lowStockThreshold: 5,
-            currentStock: 0,
+            initialStocks: [{ quantity: 1 }],
           }}
-        >
-          <Form.Item
-            name="locations"
-            label="Locations"
-            rules={[
-              {
-                required: true,
-                message: "Please select at least one location!",
-              },
-            ]}
-          >
-            <Select
-              mode="multiple"
-              showSearch
-              allowClear
-              loading={isLocationsLoading}
-              placeholder="Search and select one or more locations"
-              options={locationOptions}
-              optionFilterProp="label"
-              onChange={handleLocationsChange}
-              filterOption={(input, option) =>
-                (option?.label ?? "")
-                  .toLowerCase()
-                  .includes(input.toLowerCase())
-              }
-              notFoundContent="No locations found"
-            />
-          </Form.Item>
-
-          <Space size="large" wrap>
-            <Form.Item
-              name="name"
-              label="Item Name"
-              rules={[
-                {
-                  required: true,
-                  message: "Please input the item name!",
-                },
-              ]}
-            >
-              <Input placeholder="e.g. MacBook Pro M3" />
-            </Form.Item>
-
-            <Form.Item
-              name="sku"
-              label="SKU ID"
-              rules={[
-                {
-                  required: true,
-                  message: "Please input the SKU code!",
-                },
-                {
-                  min: 2,
-                  message: "SKU must be at least 2 characters",
-                },
-              ]}
-            >
-              <Input placeholder="e.g. APPLE-MBP-M3" />
-            </Form.Item>
-          </Space>
-
-          <div style={{ display: "flex", gap: 16 }}>
-            <Form.Item
-              name="currentStock"
-              label="Stock Quantity"
-              rules={[
-                {
-                  required: true,
-                  message: "Please input the stock quantity!",
-                },
-              ]}
-            >
-              <InputNumber style={{ width: "100%" }} min={0} />
-            </Form.Item>
-
-            <Form.Item
-              name="price"
-              label="Unit Price (Rs.)"
-              rules={[
-                {
-                  required: true,
-                  message: "Please input unit price!",
-                },
-                {
-                  validator: (_, value) => {
-                    if (!value || value <= 0) {
-                      return Promise.reject(
-                        new Error("Price must be greater than 0"),
-                      );
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <InputNumber style={{ width: "100%" }} precision={2} min={0.01} />
-            </Form.Item>
-
-            <Form.Item
-              name="lowStockThreshold"
-              label="Low Stock Threshold"
-              rules={[
-                {
-                  required: true,
-                  message: "Please input threshold!",
-                },
-              ]}
-              style={{ flex: 1 }}
-            >
-              <InputNumber style={{ width: "100%" }} min={0} />
-            </Form.Item>
-          </div>
-
-          <Space>
-            <Button onClick={() => navigate(ROUTE_URL.ITEMS)}>Cancel</Button>
-            <Button type="primary" htmlType="submit" loading={isCreating}>
-              Create Item In Selected Locations
-            </Button>
-          </Space>
-        </Form>
+        />
       </Card>
     </div>
   );

@@ -10,7 +10,7 @@ import { successResponse } from "../utils/response.js";
 import { ITEM } from "../utils/successMessage.js";
 
 export const createItem = asyncHandler(async (req, res) => {
-  const itemData = req.body;    
+  const itemData = req.body;
   const newItem = await createItemService(itemData);
   successResponse(res, newItem, HTTP_STATUS.CREATED, ITEM.CREATED);
 });

@@ -58,7 +58,7 @@ export const getItemColumns = ({
     dataIndex: "currentStock",
     key: "currentStock",
     render: (stock, record) => {
-      const isLow = stock <= record.lowStockThreshold;
+      const isLow = record.isLowStock ?? stock <= record.lowStockThreshold;
 
       if (!highlightLowStock) {
         return <Tag color="red">{stock}</Tag>;
@@ -96,7 +96,8 @@ export const getItemColumns = ({
       title: "Low Stock",
       key: "low-stock",
       render: (_, record) => {
-        const isLowStock = record.currentStock <= record.lowStockThreshold;
+        const isLowStock =
+          record.isLowStock ?? record.currentStock <= record.lowStockThreshold;
         return isLowStock ? (
           <Tag color="error">{lowStockStatusLabel}</Tag>
         ) : (

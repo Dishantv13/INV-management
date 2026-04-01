@@ -1,3 +1,4 @@
+
 export const ITEM_URL = {
   BASE: "/items",
   BY_ID: (id) => `/items/${id}`,
@@ -10,12 +11,14 @@ export const STOCK_URL = {
   LOCATIONS: (itemId) => `/stock/locations/${itemId}`,
   HISTORY_ALL: "/stock/history",
   HISTORY: (itemId) => `/stock/history/${itemId}`,
+  ITEMS_BY_LOCATION: (locationId) => `/stock/${locationId}/items`,
 };
 
 export const LOCATION_URL = {
   BASE: "/locations",
   BY_ID: (id) => `/locations/${id}`,
   ITEMS: (id) => `/locations/${id}/items`,
+  ITEMS_MOVEMENT: (id) => `/locations/${id}/itemsMovement`,
   UPDATE_STATUS: (id) => `/locations/${id}/status`,
 };
 
@@ -26,4 +29,6 @@ export const ROUTE_URL = {
   STOCK_ADJUSTMENT: "/stock-adjustment",
   STOCK_HISTORY: "/stock/history",
   LOCATIONS: "/locations",
+  LOCATION_ITEMS: (locationId = ":locationId") =>
+    `/locations/${locationId}/items`,
 };
