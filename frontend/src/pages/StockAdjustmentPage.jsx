@@ -6,52 +6,55 @@ import {
   useStockOutMutation,
 } from "../services/stockMovementApi";
 import {
-  useGetActiveLocationsQuery,
-  useLazyGetLocationItemsQuery,
-} from "../services/locationApi";
+  useLazyGetItemByIdQuery,
+  useGetItemsQuery,
+} from "../services/itemApi";
+import { useGetActiveLocationsQuery } from "../services/locationApi";
 
 const StockAdjustmentPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   const {
+    data: itemsResponse = [],
+    isLoading: itemsLoading,
+  } = useGetItemsQuery({ page: 1, limit: 1000 });
+
+  const {
     data: locationsResponse = { data: [] },
     isLoading: locationsLoading,
   } = useGetActiveLocationsQuery({ page: 1, limit: 1000 });
-  const [fetchLocationItems, { data: locationItemsResponse, isFetching: isItemsFetching }] =
-    useLazyGetLocationItemsQuery();
+
+  const [fetchItemDetails, { data: selectedItemDetails, isFetching: isItemFetching }] =
+    useLazyGetItemByIdQuery();
 
   const [stockIn, { isLoading: isStockInLoading }] = useStockInMutation();
   const [stockOut, { isLoading: isStockOutLoading }] = useStockOutMutation();
 
-  const handleLocationChange = async (locationId) => {
-    if (!locationId) {
+  const handleItemChange = async (itemId) => {
+    if (!itemId) {
       return;
     }
 
     try {
-      await fetchLocationItems({
-        locationId,
-        page: 1,
-        limit: 1000,
-      }).unwrap();
+      await fetchItemDetails(itemId).unwrap();
     } catch {
-      messageApi.error("Failed to load items for selected location");
+      messageApi.error("Failed to load details for selected item");
     }
   };
 
-  const handleSubmit = async ({ locationId, reference, note, adjustments = [] }) => {
-    const validAdjustments = adjustments.filter((row) => row?.itemId);
+  const handleSubmit = async ({ itemId, reference, note, adjustments = [] }) => {
+    const validAdjustments = adjustments.filter((row) => row?.locationId);
 
     if (validAdjustments.length === 0) {
-      messageApi.error("Please add at least one item adjustment");
+      messageApi.error("Please add at least one location adjustment");
       return false;
     }
 
     const results = await Promise.allSettled(
       validAdjustments.map((row) => {
         const payload = {
-          itemId: row.itemId,
-          locationId,
+          itemId,
+          locationId: row.locationId,
           quantity: Number(row.quantity),
           reference,
           note,
@@ -71,9 +74,9 @@ const StockAdjustmentPage = () => {
     try {
       if (successCount > 0 && failCount === 0) {
         messageApi.success(
-          `${successCount} item adjustment(s) applied successfully`,
+          `${successCount} location adjustment(s) applied successfully`,
         );
-        await fetchLocationItems({ locationId, page: 1, limit: 1000 }).unwrap();
+        await fetchItemDetails(itemId).unwrap();
         return true;
       }
 
@@ -81,7 +84,7 @@ const StockAdjustmentPage = () => {
         messageApi.warning(
           `${successCount} succeeded and ${failCount} failed. Please review and retry failed rows.`,
         );
-        await fetchLocationItems({ locationId, page: 1, limit: 1000 }).unwrap();
+        await fetchItemDetails(itemId).unwrap();
         return false;
       }
 
@@ -96,23 +99,24 @@ const StockAdjustmentPage = () => {
   };
 
   const loading =
-    locationsLoading || isItemsFetching || isStockInLoading || isStockOutLoading;
+    itemsLoading || isItemFetching || isStockInLoading || isStockOutLoading || locationsLoading;
 
   return (
     <div>
       {contextHolder}
       <PageHeaderBar
         title="Stock Adjustment"
-        subtitle="Select location, then adjust multiple items in one submit"
+        subtitle="Select item, then adjust stock across multiple locations"
       />
       <StockAdjustmentForm
+        items={itemsResponse}
+        selectedItemDetails={selectedItemDetails}
         locations={locationsResponse.data}
-        locationItems={locationItemsResponse?.data || []}
         loading={loading}
-        itemsLoading={isItemsFetching}
-        locationsLoading={locationsLoading}
+        itemFetching={isItemFetching}
+        itemsLoading={itemsLoading}
         onSubmit={handleSubmit}
-        onLocationChange={handleLocationChange}
+        onItemChange={handleItemChange}
       />
     </div>
   );

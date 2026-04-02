@@ -2,6 +2,7 @@ export const ITEM = {
     CREATED: "Item created successfully",
     RETRIEVED: "Item retrieved successfully",
     DASHBOARD_STATS_RETRIEVED: "Dashboard stats retrieved successfully",    
+    DASHBOARD_LOW_STOCK_RETRIEVED: "Dashboard low stock items retrieved successfully",
 }
 
 export const STOCK_MOVEMENT = {
@@ -15,4 +16,5 @@ export const LOCATION = {
     RETRIEVED: "Location retrieved successfully",
     UPDATED: "Location status updated successfully",
     DELETED: "Location deleted successfully",
+    GET_ITEMS_RETRIEVED: "Items at location retrieved successfully",
 }

@@ -42,14 +42,17 @@ const runStockMovementTransaction = async (movementData) => {
         throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Location is not active");
       }
 
-      const latestLocationMovement = await StockMovement.findOne({
-        itemId,
-        locationId,
-      })
-        .sort({ createdAt: -1 })
-        .session(session);
+      let inventoryEntry = item.inventory.find(
+        (inv) => String(inv.locationId) === String(locationId),
+      );
 
-      const previousStock = latestLocationMovement?.currentStock || 0;
+      if (!inventoryEntry) {
+        inventoryEntry = { locationId, currentStock: 0 };
+        item.inventory.push(inventoryEntry);
+        inventoryEntry = item.inventory[item.inventory.length - 1];
+      }
+
+      const previousStock = inventoryEntry.currentStock;
       let movementQty = 0;
       let nextStock = previousStock;
 
@@ -57,7 +60,7 @@ const runStockMovementTransaction = async (movementData) => {
         if (quantity >= previousStock) {
           throw new ApiError(
             HTTP_STATUS.BAD_REQUEST,
-            "Quantity cannot be greater than or equal to current location stock for OUT movement",
+            `New quantity must be less than current stock for OUT movement. Current: ${previousStock}`,
           );
         }
         movementQty = previousStock - quantity;
@@ -66,7 +69,7 @@ const runStockMovementTransaction = async (movementData) => {
         if (quantity <= previousStock) {
           throw new ApiError(
             HTTP_STATUS.BAD_REQUEST,
-            "Quantity cannot be less than or equal to current location stock for IN movement",
+            `New quantity must be greater than current stock for IN movement. Current: ${previousStock}`,
           );
         }
         movementQty = quantity - previousStock;
@@ -75,9 +78,13 @@ const runStockMovementTransaction = async (movementData) => {
         throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid movement type");
       }
 
-      item.currentStock = item.currentStock + (nextStock - previousStock);
+      const stockDiff = nextStock - previousStock;
 
+      inventoryEntry.currentStock = nextStock;
+
+      item.currentStock += stockDiff;
       await item.save({ session });
+
       stockMovement = await StockMovement.create(
         [
           {
@@ -141,6 +148,27 @@ export const getStockHistoryServices = async (itemId, query = {}) => {
 };
 
 export const getAllStockHistoryServices = async (query = {}) => {
-  return getPaginatedHistory({}, query);
-};
+  const filter = {};
 
+  if (query.search) {
+    const searchRegex = new RegExp(query.search, "i");
+    const matchLocation = await Location.find({
+      $or: [{ name: searchRegex }, { locationNo: searchRegex }],
+    }).select("_id");
+    const locationIds = matchLocation.map((loc) => loc._id);
+
+    const matchItem = await Item.find({
+      $or: [{ name: searchRegex }, { sku: searchRegex }],
+    }).select("_id");
+    const itemIds = matchItem.map((item) => item._id);
+
+    filter.$or = [
+      { locationId: { $in: locationIds } },
+      { itemId: { $in: itemIds } },
+      { reference: searchRegex },
+      { type: searchRegex },
+      { note: searchRegex },
+    ];
+  }
+  return getPaginatedHistory(filter, query);
+};

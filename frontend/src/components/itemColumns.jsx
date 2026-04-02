@@ -45,8 +45,11 @@ export const getItemColumns = ({
       title: "Location",
       key: "location",
       render: (_, record) => {
+        if (record?.locationName) {
+          return `${record.locationName} (${record.locationNo || "-"})`;
+        }
         if (record?.location && typeof record.location === "object") {
-          return `${record.location.name} (${record.location.locationNo})`;
+          return `${record.location.name} (${record.location.locationNo || "-"})`;
         }
         return "-";
       },
@@ -55,13 +58,19 @@ export const getItemColumns = ({
 
   columns.push({
     title: "Current Stock",
-    dataIndex: "currentStock",
     key: "currentStock",
-    render: (stock, record) => {
-      const isLow = record.isLowStock ?? stock <= record.lowStockThreshold;
+    render: (_, record) => {
+      const stock =
+        record.currentStockAtLocation !== undefined
+          ? record.currentStockAtLocation
+          : record.currentStock;
+      const isLow =
+        record.isLowStock !== undefined
+          ? record.isLowStock
+          : stock <= record.lowStockThreshold;
 
       if (!highlightLowStock) {
-        return <Tag color="red">{stock}</Tag>;
+        return <Tag color="error">{stock}</Tag>;
       }
 
       if (showLowStockStatus) {

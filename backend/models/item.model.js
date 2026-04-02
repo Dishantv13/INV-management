@@ -26,10 +26,20 @@ const itemSchema = new Schema(
       type: Number,
       default: 5,
     },
-    location: {
-      type: Schema.Types.ObjectId,
-      ref: "Location",
-    },
+    inventory: [
+      {
+        locationId: {
+          type: Schema.Types.ObjectId,
+          ref: "Location",
+          required: true,
+        },
+        currentStock: {
+          type: Number,
+          default: 0,
+          min: 0,
+        },
+      },
+    ],
   },
   { timestamps: true },
 );
@@ -37,6 +47,6 @@ const itemSchema = new Schema(
 itemSchema.virtual("isLowStock").get(function () {
   return this.currentStock <= this.lowStockThreshold;
 });
-itemSchema.index({ sku: 1, location: 1 }, { unique: true });
+itemSchema.index({ sku: 1 }, { unique: true });
 
 export const Item = mongoose.model("Item", itemSchema);

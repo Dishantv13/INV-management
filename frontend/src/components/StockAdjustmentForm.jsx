@@ -12,17 +12,18 @@ import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 
 
 const StockAdjustmentForm = ({
+  items,
+  selectedItemDetails,
   locations,
-  locationItems,
   loading,
+  itemFetching,
   itemsLoading,
   onSubmit,
-  onLocationChange,
-  locationsLoading,
+  onItemChange,
 }) => {
   const [form] = Form.useForm();
 
-  const option = [
+  const referenceOptions = [
     { value: "manual", label: "Manual" },
     { value: "sale", label: "Sale" },
     { value: "purchase", label: "Purchase" },
@@ -35,23 +36,40 @@ const StockAdjustmentForm = ({
       const isSuccess = await onSubmit(values);
 
       if (isSuccess) {
-        form.setFieldValue("adjustments", [{ type: "IN" }]);
+        form.resetFields();
       }
     } catch {
       return null;
     }
   };
 
-  const itemOptions = locationItems.map((item) => ({
-    value: item.itemId,
-    label: `${item.name} (${item.sku}) (Current: ${item.currentStock})`,
-    currentStock: item.currentStock,
+  const handleItemSelect = (itemId) => {
+    onItemChange?.(itemId);
+    form.setFieldValue("adjustments", [{ type: "IN" }]);
+  };
+
+  const findCurrentStock = (locationId) => {
+    if (!selectedItemDetails || !selectedItemDetails.inventory) return 0;
+    const entry = selectedItemDetails.inventory.find(
+      (inv) => String(inv.locationId) === String(locationId),
+    );
+    return entry?.currentStock || 0;
+  };
+
+  const adjustments = Form.useWatch("adjustments", form) || [];
+
+  const locationOptions = locations.map((loc) => ({
+    value: loc._id,
+    label: `${loc.name} (${loc.locationNo})`,
   }));
 
-  const findCurrentStock = (itemId) => {
-    const matched = locationItems.find((item) => item.itemId === itemId);
-    return matched?.currentStock || 0;
-  };
+  const availableLocationIds = (selectedItemDetails?.inventory || []).map((inv) =>
+    String(inv.locationId),
+  );
+
+  const filteredLocationOptions = locationOptions.filter((opt) =>
+    availableLocationIds.includes(String(opt.value)),
+  );
 
   return (
     <Card>
@@ -64,27 +82,24 @@ const StockAdjustmentForm = ({
         }}
       >
         <Form.Item
-          name="locationId"
-          label="Select Location"
-          rules={[{ required: true, message: "Please select a location" }]}
+          name="itemId"
+          label="Select Item"
+          rules={[{ required: true, message: "Please select an item" }]}
         >
           <Select
-            placeholder="Choose location"
-            onChange={(value) => {
-              form.setFieldValue("adjustments", [{ type: "IN" }]);
-              onLocationChange?.(value);
-            }}
-            loading={locationsLoading}
-            options={locations.map((location) => ({
-              value: location._id,
-              label: `${location.name} (${location.locationNo})`,
-            }))}
+            placeholder="Choose item to adjust"
+            onChange={handleItemSelect}
+            loading={itemsLoading}
             showSearch
             optionFilterProp="label"
+            options={items.map((item) => ({
+              value: item._id,
+              label: `${item.name} (${item.sku})`,
+            }))}
           />
         </Form.Item>
 
-        <Divider orientation="left">Item Adjustments</Divider>
+        <Divider orientation="left">Location Adjustments</Divider>
 
         <Form.List
           name="adjustments"
@@ -93,7 +108,7 @@ const StockAdjustmentForm = ({
               validator: async (_, value) => {
                 if (!value || value.length < 1) {
                   return Promise.reject(
-                    new Error("Please add at least one item adjustment"),
+                    new Error("Please add at least one location adjustment"),
                   );
                 }
                 return Promise.resolve();
@@ -105,20 +120,21 @@ const StockAdjustmentForm = ({
             <>
               {fields.map((field, index) => {
                 const { key, ...restField } = field;
-                const rows = form.getFieldValue("adjustments") || [];
-                const selectedByOtherRows = rows
-                  .filter((_, rowIndex) => rowIndex !== index)
-                  .map((row) => row?.itemId)
-                  .filter(Boolean);
-                const currentRowItem = rows?.[index]?.itemId;
+                const currentRow = adjustments[index] || {};
+                const currentLocationId = currentRow.locationId;
 
-                const rowItemOptions = itemOptions.filter(
-                  (option) =>
-                    option.value === currentRowItem ||
-                    !selectedByOtherRows.includes(option.value),
+                const selectedByOtherRows = adjustments
+                  .filter((_, rowIndex) => rowIndex !== index)
+                  .map((row) => row?.locationId)
+                  .filter(Boolean);
+
+                const finalLocationOptions = filteredLocationOptions.filter(
+                  (opt) =>
+                    opt.value === currentLocationId ||
+                    !selectedByOtherRows.includes(opt.value),
                 );
 
-                const currentStock = findCurrentStock(currentRowItem);
+                const currentStock = findCurrentStock(currentLocationId);
 
                 return (
                   <Space
@@ -129,27 +145,37 @@ const StockAdjustmentForm = ({
                   >
                     <Form.Item
                       {...restField}
-                      name={[field.name, "itemId"]}
-                      label={index === 0 ? "Item" : ""}
+                      name={[field.name, "locationId"]}
+                      label={index === 0 ? "Location" : ""}
                       rules={[
-                        { required: true, message: "Please select item" },
+                        { required: true, message: "Please select location" },
                       ]}
                       style={{ minWidth: 320 }}
                     >
                       <Select
                         showSearch
                         optionFilterProp="label"
-                        placeholder={
-                          form.getFieldValue("locationId")
-                            ? "Choose item"
-                            : "Select location first"
-                        }
-                        disabled={!form.getFieldValue("locationId")}
-                        loading={itemsLoading}
-                        options={rowItemOptions}
+                        placeholder="Choose location"
+                        loading={itemFetching}
+                        options={finalLocationOptions}
                       />
                     </Form.Item>
 
+                    <Form.Item
+                      label={index === 0 ? "Current Stock" : ""}
+                      style={{ width: 120 }}
+                    >
+                      <InputNumber
+                        value={currentStock}
+                        readOnly
+                        disabled
+                        style={{
+                          width: "100%",
+                          color: "rgba(0, 0, 0, 0.85)",
+                          backgroundColor: "#f5f5f5",
+                        }}
+                      />
+                    </Form.Item>
                     <Form.Item
                       {...restField}
                       name={[field.name, "type"]}
@@ -160,7 +186,6 @@ const StockAdjustmentForm = ({
                       style={{ width: 140 }}
                     >
                       <Select
-                        disabled={!form.getFieldValue("locationId")}
                         options={[
                           { value: "IN", label: "Add" },
                           { value: "OUT", label: "Remove" },
@@ -175,23 +200,27 @@ const StockAdjustmentForm = ({
                       rules={[
                         {
                           required: true,
-                          message: "Please enter stock quantity",
+                          message: "Please enter quantity",
                         },
                         ({ getFieldValue }) => ({
                           validator: (_, value) => {
-                            const itemId = getFieldValue([
+                            const locationId = getFieldValue([
                               "adjustments",
                               field.name,
-                              "itemId",
+                              "locationId",
                             ]);
                             const type = getFieldValue([
                               "adjustments",
                               field.name,
                               "type",
                             ]);
-                            const latestStock = findCurrentStock(itemId);
+                            const latestStock = findCurrentStock(locationId);
 
-                            if (!value || value <= 0) {
+                            if (value === undefined || value === null) {
+                              return Promise.resolve();
+                            }
+
+                            if (value <= 0) {
                               return Promise.reject(
                                 new Error("Quantity must be greater than 0"),
                               );
@@ -219,14 +248,8 @@ const StockAdjustmentForm = ({
                       ]}
                       style={{ width: 180 }}
                     >
-                      <InputNumber
-                        min={1}
-                        style={{ width: "100%" }}
-                        disabled={!form.getFieldValue("locationId")}
-                      />
+                      <InputNumber min={0} style={{ width: "100%" }} />
                     </Form.Item>
-
-
 
                     <Button
                       danger
@@ -246,9 +269,9 @@ const StockAdjustmentForm = ({
                 type="dashed"
                 onClick={() => add({ type: "IN" })}
                 icon={<PlusOutlined />}
-                disabled={!form.getFieldValue("locationId")}
+                disabled={!form.getFieldValue("itemId")}
               >
-                Add Item Row
+                Add Location Row
               </Button>
             </>
           )}
@@ -261,7 +284,10 @@ const StockAdjustmentForm = ({
             { required: true, message: "Please select a reference type" },
           ]}
         >
-          <Select placeholder="Select reference type" options={option} />
+          <Select
+            placeholder="Select reference type"
+            options={referenceOptions}
+          />
         </Form.Item>
 
         <Form.Item name="note" label="Note (Optional)">

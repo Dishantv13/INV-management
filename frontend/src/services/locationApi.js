@@ -43,20 +43,6 @@ export const locationApi = baseApi.injectEndpoints({
       providesTags: (result, error, locationId) =>
         tagById(TAG_TYPES.LOCATIONS, locationId),
     }),
-    getLocationItems: builder.query({
-      query: ({ locationId, page = 1, limit = 10 } = {}) => ({
-        url: LOCATION_URL.ITEMS_MOVEMENT(locationId),
-        params: { page, limit },
-      }),
-      transformResponse: (response) => ({
-        data: response?.data || [],
-        pagination: response?.pagination || null,
-      }),
-      providesTags: (result, error, locationId) => [
-        ...tagById(TAG_TYPES.LOCATIONS, locationId),
-        ...tagList(TAG_TYPES.ITEMS),
-      ],
-    }),
     updateLocationStatus: builder.mutation({
       query: ({ locationId, status }) => ({
         url: LOCATION_URL.UPDATE_STATUS(locationId),
@@ -97,7 +83,6 @@ export const {
   useGetActiveLocationsQuery,
   useGetLocationByIdQuery,
   useGetItemsByLocationQuery,
-  useLazyGetLocationItemsQuery,
   useCreateLocationMutation,
   useUpdateLocationStatusMutation,
   useDeleteLocationMutation,

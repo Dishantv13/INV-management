@@ -4,7 +4,7 @@ import DashboardCard from "../components/DashboardCard";
 import LowStockTable from "../components/LowStockTable";
 import PageHeaderBar from "../components/PageHeaderBar";
 import {
-  useGetItemsPaginatedQuery,
+  useGetDashboardLowStockQuery,
   useGetDashboardStatsQuery,
 } from "../services/itemApi";
 
@@ -20,10 +20,9 @@ const Dashboard = () => {
 
   const { data: dashboardStats } = useGetDashboardStatsQuery();
   const { data: lowStockResponse = { data: [], pagination: null }, isLoading } =
-    useGetItemsPaginatedQuery({
+    useGetDashboardLowStockQuery({
       page,
       limit,
-      lowStockOnly: true,
     });
 
   const handlePaginationChange = (nextPage, nextPageSize) => {

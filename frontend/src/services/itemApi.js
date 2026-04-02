@@ -48,6 +48,23 @@ export const itemApi = baseApi.injectEndpoints({
       providesTags: (result) =>
         tagListWithIds(TAG_TYPES.ITEMS, result ? [result] : []),
     }),
+    getItemById: builder.query({
+      query: (id) => ITEM_URL.BY_ID(id),
+      transformResponse: (response) => response?.data,
+      providesTags: (result, error, id) => [{ type: TAG_TYPES.ITEMS, id }],
+    }),
+    getDashboardLowStock: builder.query({
+      query: ({ page = 1, limit = 5 } = {}) => ({
+        url: ITEM_URL.DASHBOARD_LOW_STOCK,
+        params: { page, limit },
+      }),
+      transformResponse: (response) => ({
+        data: response?.data || [],
+        pagination: response?.pagination || null,
+      }),
+      providesTags: (result) =>
+        tagListWithIds(TAG_TYPES.ITEMS, result?.data || []),
+    }),
   }),
 });
 
@@ -56,4 +73,7 @@ export const {
   useGetItemsPaginatedQuery,
   useCreateItemMutation,
   useGetDashboardStatsQuery,
+  useGetItemByIdQuery,
+  useLazyGetItemByIdQuery,
+  useGetDashboardLowStockQuery,
 } = itemApi;

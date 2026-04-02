@@ -32,7 +32,7 @@ export const stockMovementApi = baseApi.injectEndpoints({
     stockHistory: builder.query({
       query: ({ itemId, page = 1, limit = 10, skip, search } = {}) => ({
         url: itemId ? STOCK_URL.HISTORY(itemId) : STOCK_URL.HISTORY_ALL,
-        params: { page, limit, skip },
+        params: { page, limit, skip, search },
       }),
       transformResponse: (response) => ({
         data: response?.data || [],

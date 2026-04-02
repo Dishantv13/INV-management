@@ -5,7 +5,6 @@ import {
   updateLocationStatusService,
   deleteLocationService,
   getLocationItemService,
-  getLocationItemsMovementService,
 } from "../services/location.services.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { successResponse } from "../utils/response.js";
@@ -49,14 +48,5 @@ export const getItemsByLocation = asyncHandler(async (req, res) => {
     locationId,
     req.query,
   );
-  successResponse(res, data, HTTP_STATUS.OK, LOCATION.RETRIEVED, pagination);
-});
-
-export const getLocationItemsMovement = asyncHandler(async (req, res) => {
-  const { locationId } = req.params;
-  const { data, pagination } = await getLocationItemsMovementService(
-    locationId,
-    req.query,
-  );
-  successResponse(res, data, HTTP_STATUS.OK, LOCATION.RETRIEVED, pagination);
+  successResponse(res, data, HTTP_STATUS.OK, LOCATION.GET_ITEMS_RETRIEVED, pagination);
 });

@@ -6,7 +6,7 @@ const ItemTable = ({ items, loading, pagination, onPaginationChange }) => {
     nameTitle: "Name",
     showPrice: true,
     showSorter: false,
-    showLocation: true,
+    showLocation: false,
     showThreshold: true,
     highlightLowStock: true,
     showLowStockStatus: true,

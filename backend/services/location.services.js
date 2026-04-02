@@ -1,9 +1,7 @@
 import { Location } from "../models/location.model.js";
 import { Item } from "../models/item.model.js";
-import { StockMovement } from "../models/stockMovement.model.js";
 import { HTTP_STATUS } from "../utils/httpCode.js";
 import ApiError from "../utils/apiError.js";
-import mongoose from "mongoose";
 import { getPagination, getPaginationMeta } from "../utils/pagination.js";
 
 export const createLocationService = async (locationData) => {
@@ -27,7 +25,7 @@ export const createLocationService = async (locationData) => {
 
   const newLocation = await Location.create({
     name: name.trim(),
-    locationNo: locationNo.trim(),
+    locationNo: locationNo.trim().toUpperCase(),
     status: "active",
   });
   return newLocation;
@@ -115,84 +113,34 @@ export const getLocationItemService = async (locationId, query = {}) => {
     const searchRegex = new RegExp(query.search, "i");
     filter.$or = [{ name: searchRegex }, { sku: searchRegex }];
   }
-  const totalItems = await Item.countDocuments({ location: locationId });
-  const items = await Item.find({ location: locationId })
-    .select("name sku currentStock lowStockThreshold")
+  const totalItems = await Item.countDocuments({
+    ...filter,
+    "inventory.locationId": locationId,
+  });
+  const items = await Item.find({
+    ...filter,
+    "inventory.locationId": locationId,
+  })
+    .select("name sku inventory lowStockThreshold")
     .skip(skip)
     .limit(limit);
 
   return {
-    data: items.map((item) => ({
-      ...item.toObject(),
-      isLowStock: item.currentStock <= item.lowStockThreshold,
-    })),
-    pagination: getPaginationMeta(totalItems, page, limit),
-  };
-};
+    data: items.map((item) => {
+      const inventoryEntry = item.inventory.find(
+        (inv) => String(inv.locationId) === String(locationId),
+      );
+      const currentStockAtLocation = inventoryEntry?.currentStock || 0;
 
-export const getLocationItemsMovementService = async (
-  locationId,
-  query = {},
-) => {
-  const { page, limit, skip } = getPagination({
-    page: query.page,
-    limit: query.limit,
-    skip: query.skip,
-  });
-
-  if (!mongoose.Types.ObjectId.isValid(locationId)) {
-    throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid locationId");
-  }
-
-  const location = await Location.findById(locationId);
-  if (!location) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, "Location not found");
-  }
-
-  const result = await StockMovement.aggregate([
-    { $match: { locationId: new mongoose.Types.ObjectId(locationId) } },
-
-    { $sort: { itemId: 1, createdAt: -1 } },
-
-    {
-      $group: {
-        _id: "$itemId",
-        currentStock: { $first: "$currentStock" },
-      },
-    },
-
-    {
-      $facet: {
-        data: [{ $sort: { _id: 1 } }, { $skip: skip }, { $limit: limit }],
-        totalCount: [{ $count: "total" }],
-      },
-    },
-  ]);
-
-  const latestMovements = result[0]?.data || [];
-  const totalItems = result[0]?.totalCount[0]?.total || 0;
-
-  const items = await Item.find({ location: locationId })
-    .select("name sku lowStockThreshold")
-    .lean();
-
-  const itemMap = new Map(items.map((item) => [String(item._id), item]));
-
-  const data = latestMovements.map((movement) => {
-    const item = itemMap.get(String(movement._id));
-
-    return {
-      itemId: movement._id,
-      name: item?.name,
-      sku: item?.sku,
-      currentStock: movement.currentStock || 0,
-      isLowStock:
-        (movement.currentStock || 0) <= (item?.lowStockThreshold || 0),
-    };
-  });
-
-  return {
-    data,
+      return {
+        _id: item._id,
+        name: item.name,
+        sku: item.sku,
+        currentStock: currentStockAtLocation,
+        lowStockThreshold: item.lowStockThreshold,
+        isLowStock: currentStockAtLocation <= item.lowStockThreshold,
+      };
+    }),
     pagination: getPaginationMeta(totalItems, page, limit),
   };
 };

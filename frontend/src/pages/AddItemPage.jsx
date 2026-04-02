@@ -60,44 +60,20 @@ const AddItemPage = () => {
       return;
     }
 
-    const results = await Promise.allSettled(
-      initialStocks.map((stock) =>
-        createItem({
-          name,
-          sku,
-          price,
-          currentStock: Number(stock.quantity),
-          lowStockThreshold,
-          location: stock.location,
-        }).unwrap(),
-      ),
-    );
+    try {
+      await createItem({
+        name,
+        sku,
+        price,
+        lowStockThreshold,
+        initialStocks,
+      }).unwrap();
 
-    const successCount = results.filter(
-      (result) => result.status === "fulfilled",
-    ).length;
-    const failedResults = results.filter(
-      (result) => result.status === "rejected",
-    );
-    const failedCount = failedResults.length;
-
-    if (failedCount === 0) {
-      messageApi.success(
-        `Item created in ${initialStocks.length} location(s) successfully`,
-      );
+      messageApi.success("Item created successfully across all locations");
       navigate(ROUTE_URL.ITEMS);
-      return;
+    } catch (error) {
+      messageApi.error(error?.data?.message || "Failed to create item");
     }
-
-    if (successCount > 0) {
-      messageApi.warning(
-        `${successCount} location(s) succeeded, ${failedCount} failed. Please review duplicate SKUs or invalid values and try again.`,
-      );
-      return;
-    }
-
-    const firstError = failedResults[0]?.reason;
-    messageApi.error(firstError?.data?.message || "Failed to create item");
   };
 
   return (

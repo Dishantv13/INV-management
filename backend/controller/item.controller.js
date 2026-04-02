@@ -3,6 +3,7 @@ import {
   getAllItemsService,
   getItemByIdService,
   getDashboardStatsService,
+  getDashboardLowStockService,
 } from "../services/item.services.js";
 import { HTTP_STATUS } from "../utils/httpCode.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -29,4 +30,9 @@ export const getItemById = asyncHandler(async (req, res) => {
 export const getDashboardStats = asyncHandler(async (req, res) => {
   const stats = await getDashboardStatsService();
   successResponse(res, stats, HTTP_STATUS.OK, ITEM.DASHBOARD_STATS_RETRIEVED);
+});
+
+export const getDashboardLowStock = asyncHandler(async (req, res) => {
+  const { data, pagination } = await getDashboardLowStockService(req.query);
+  successResponse(res, data, HTTP_STATUS.OK, ITEM.DASHBOARD_LOW_STOCK_RETRIEVED, pagination);
 });
