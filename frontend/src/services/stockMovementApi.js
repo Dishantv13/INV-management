@@ -11,18 +11,9 @@ const stockMutationInvalidates = (itemId) => [
 
 export const stockMovementApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    stockIn: builder.mutation({
+    adjustStock: builder.mutation({
       query: (payload) => ({
-        url: STOCK_URL.IN,
-        method: "POST",
-        body: payload,
-      }),
-      invalidatesTags: (result, error, payload) =>
-        stockMutationInvalidates(payload?.itemId),
-    }),
-    stockOut: builder.mutation({
-      query: (payload) => ({
-        url: STOCK_URL.OUT,
+        url: STOCK_URL.ADJUST,
         method: "POST",
         body: payload,
       }),
@@ -47,7 +38,7 @@ export const stockMovementApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useStockInMutation,
-  useStockOutMutation,
   useStockHistoryQuery,
+  useLazyStockHistoryQuery,
+  useAdjustStockMutation
 } = stockMovementApi;

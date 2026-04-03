@@ -37,6 +37,10 @@ const stockMovementSchema = new Schema(
       required: true,
       min: 0,
     },
+    movementSequence: {
+      type: Number,
+      required: true,
+    },
   },
   { timestamps: true },
 );

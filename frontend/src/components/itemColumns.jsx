@@ -4,6 +4,8 @@ const { Text } = Typography;
 
 export const getItemColumns = ({
   nameTitle = "Name",
+  showName = true,
+  showSku = true,
   showPrice = true,
   showSorter = false,
   priceFormatter = (value) => `Rs. ${Number(value).toFixed(2)}`,
@@ -11,25 +13,32 @@ export const getItemColumns = ({
   highlightLowStock = true,
   stockHealthyColor = "#135200",
   showLowStockStatus = false,
+  showInventory = false,
   lowStockStatusLabel = "Low",
   healthyStatusLabel = "OK",
   showLocation = false,
+  globalThreshold = null,
 } = {}) => {
-  const columns = [
-    {
+  const columns = []
+  
+  if (showName) {
+    columns.push({
       title: nameTitle,
       dataIndex: "name",
       key: "name",
       ...(showSorter && {
         sorter: (a, b) => a.name.localeCompare(b.name),
       }),
-    },
-    {
+    })
+  }
+
+  if (showSku) {
+    columns.push({
       title: "SKU",
       dataIndex: "sku",
       key: "sku",
-    },
-  ];
+    })
+  }
 
   if (showPrice) {
     columns.push({
@@ -56,6 +65,21 @@ export const getItemColumns = ({
     });
   }
 
+  if (showInventory) {
+    columns.push(
+      {
+        title: "Location Name",
+        key: "locationName",
+        render: (_, record) => record.locationId?.name || "-",
+      },
+      {
+        title: "Location No",
+        key: "locationNo",
+        render: (_, record) => record.locationId?.locationNo || "-",
+      }
+    );
+  }
+
   columns.push({
     title: "Current Stock",
     key: "currentStock",
@@ -64,10 +88,13 @@ export const getItemColumns = ({
         record.currentStockAtLocation !== undefined
           ? record.currentStockAtLocation
           : record.currentStock;
+      const threshold =
+        record.lowStockThreshold ?? globalThreshold ?? 0;
+
       const isLow =
         record.isLowStock !== undefined
           ? record.isLowStock
-          : stock <= record.lowStockThreshold;
+          : stock <= threshold;
 
       if (!highlightLowStock) {
         return <Tag color="error">{stock}</Tag>;
@@ -105,8 +132,11 @@ export const getItemColumns = ({
       title: "Low Stock",
       key: "low-stock",
       render: (_, record) => {
+        const threshold =
+          record.lowStockThreshold ?? globalThreshold ?? 0;
+
         const isLowStock =
-          record.isLowStock ?? record.currentStock <= record.lowStockThreshold;
+          record.isLowStock ?? record.currentStock <= threshold;
         return isLowStock ? (
           <Tag color="error">{lowStockStatusLabel}</Tag>
         ) : (
@@ -121,6 +151,8 @@ export const getItemColumns = ({
 
 export const lowStockColumns = getItemColumns({
   nameTitle: "Item Name",
+  showName: true,
+  showSku: true,
   showPrice: true,
   showSorter: false,
   showThreshold: true,
@@ -131,9 +163,12 @@ export const lowStockColumns = getItemColumns({
 
 export const locationStockColumns = getItemColumns({
   nameTitle: "Item Name",
+  showName: true,
+  showSku: true,
   showPrice: false,
   showSorter: false,
   showThreshold: true,
   highlightLowStock: true,
   showLowStockStatus: true,
 });
+

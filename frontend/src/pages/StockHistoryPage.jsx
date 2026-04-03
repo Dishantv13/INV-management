@@ -76,7 +76,9 @@ const StockHistoryPage = () => {
           style={{ width: 300 }}
         />
       </Card>
-      <StockHistoryTable
+      <StockHistoryTable  
+        showItem={true}
+        currentStock={true}
         data={historyResponse.data}
         loading={historyLoading}
         pagination={historyResponse.pagination}

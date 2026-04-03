@@ -13,7 +13,7 @@ const parsePositiveInt = (value, fallback) => {
 
 const ItemListPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
   const page = parsePositiveInt(searchParams.get("page")) || 1;
   const limit = parsePositiveInt(searchParams.get("limit")) || 10;
   const search = searchParams.get("search") || "";
@@ -43,6 +43,10 @@ const ItemListPage = () => {
     setSearchParams(nextParams);
   };
 
+  const handleRowClick = (record) => {
+    navigate(ROUTE_URL.ITEM_DETAILS(record._id));
+  };
+
   return (
     <div>
       <PageHeaderBar
@@ -68,6 +72,7 @@ const ItemListPage = () => {
           loading={isLoading}
           pagination={itemResponse.pagination}
           onPaginationChange={handlePaginationChange}
+          onRowClick={handleRowClick}
         />
       </Card>
     </div>

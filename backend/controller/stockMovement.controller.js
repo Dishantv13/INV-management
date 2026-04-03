@@ -1,7 +1,6 @@
 import {
-  addStockService,
+  adjustStockService,
   getAllStockHistoryServices,
-  removeStockService,
   getStockHistoryServices,
 } from "../services/stockMovement.services.js";
 import { HTTP_STATUS } from "../utils/httpCode.js";
@@ -9,16 +8,18 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { successResponse } from "../utils/response.js";
 import { STOCK_MOVEMENT } from "../utils/successMessage.js";
 
-export const addStock = asyncHandler(async (req, res) => {
-  const movementData = req.body;
-  const stockMovement = await addStockService(movementData);
-  successResponse(res, stockMovement, HTTP_STATUS.OK, STOCK_MOVEMENT.UPDATED);
-});
 
-export const removeStock = asyncHandler(async (req, res) => {
+export const adjustStock = asyncHandler(async (req, res) => {
   const movementData = req.body;
-  const stockMovement = await removeStockService(movementData);
-  successResponse(res, stockMovement, HTTP_STATUS.OK, STOCK_MOVEMENT.UPDATED);
+
+  const stockMovement = await adjustStockService(movementData);
+
+  successResponse(
+    res,
+    stockMovement,
+    HTTP_STATUS.OK,
+    "Stock adjusted successfully",
+  );
 });
 
 export const getStockHistory = asyncHandler(async (req, res) => {

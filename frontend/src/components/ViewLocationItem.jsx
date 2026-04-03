@@ -9,7 +9,7 @@ import {
   Tag,
 } from "antd";
 
-const defaultHeaderConfig = [
+const locationHeaderConfig = [
   {
     key: "name",
     label: "Location Name",
@@ -34,9 +34,30 @@ const defaultHeaderConfig = [
   },
 ];
 
+const itemHeaderConfig = [
+  { key: "name", label: "Item Name" },
+  { key: "sku", label: "SKU" },
+  { key: "price", label: "Price", render: (val) => `Rs. ${Number(val || 0).toFixed(2)}` },
+  { key: "currentStock", label: "Total Stock" },
+  { key: "lowStockThreshold", label: "Low Stock Threshold" },
+  {
+    key: "isLowStock",
+    label: "Status",
+    render: (_, data) => {
+      const isLow = data.currentStock <= data.lowStockThreshold;
+      return (
+        <Tag color={isLow ? "error" : "success"}>
+          {isLow ? "Low Stock" : "Stock OK"}
+        </Tag>
+      );
+    },
+  },
+];
+
 const ViewLocationItem = ({
+  type = "location",
   headerData = {},
-  headerConfig = defaultHeaderConfig,
+  headerConfig = type === "location" ? locationHeaderConfig : itemHeaderConfig,
   columns = [],
   data = [],
   loading = false,
@@ -54,7 +75,7 @@ const ViewLocationItem = ({
         {isHeaderError ? (
           <Alert type="error" showIcon message="Failed to load details" />
         ) : (
-          <Descriptions column={{ xs: 1, sm: 2, md: 3 }} size="small">
+          <Descriptions>
             {headerConfig.map((item) => (
               <Descriptions.Item key={item.key} label={item.label}>
                 {item.render
@@ -83,18 +104,17 @@ const ViewLocationItem = ({
             pagination={
               pagination
                 ? {
-                    current: pagination.page,
-                    pageSize: pagination.limit,
-                    total: pagination.totalItems,
-                    onChange: onPaginationChange,
-                    showSizeChanger: true,
-                    showQuickJumper: true,
-                    pageSizeOptions: ["5", "10", "20", "50"],
-                    showTotal: (total, range) =>
-                      `Showing ${range[0]}-${range[1]} of ${total} ${
-                        total === 1 ? entityName.slice(0, -1) : entityName
-                      }`,
-                  }
+                  current: pagination.page,
+                  pageSize: pagination.limit,
+                  total: pagination.totalItems,
+                  onChange: onPaginationChange,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  pageSizeOptions: ["5", "10", "20", "50"],
+                  showTotal: (total, range) =>
+                    `Showing ${range[0]}-${range[1]} of ${total} ${total === 1 ? entityName.slice(0, -1) : entityName
+                    }`,
+                }
                 : false
             }
           />

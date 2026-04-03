@@ -24,12 +24,14 @@ const validateCommonMovementData = ({ itemId, locationId, quantity }) => {
 };
 
 const runStockMovementTransaction = async (movementData) => {
-  const { itemId, locationId, quantity, type, reference, note } = movementData;
+  const { itemId, locationId, quantity, reference, note } = movementData;
+
   validateCommonMovementData({ itemId, locationId, quantity });
 
   const session = await mongoose.startSession();
 
   let stockMovement;
+
   try {
     await session.withTransaction(async () => {
       const item = await Item.findById(itemId).session(session);
@@ -53,37 +55,34 @@ const runStockMovementTransaction = async (movementData) => {
       }
 
       const previousStock = inventoryEntry.currentStock;
-      let movementQty = 0;
-      let nextStock = previousStock;
 
-      if (type === "OUT") {
-        if (quantity >= previousStock) {
-          throw new ApiError(
-            HTTP_STATUS.BAD_REQUEST,
-            `New quantity must be less than current stock for OUT movement. Current: ${previousStock}`,
-          );
-        }
-        movementQty = previousStock - quantity;
-        nextStock = quantity;
-      } else if (type === "IN") {
-        if (quantity <= previousStock) {
-          throw new ApiError(
-            HTTP_STATUS.BAD_REQUEST,
-            `New quantity must be greater than current stock for IN movement. Current: ${previousStock}`,
-          );
-        }
-        movementQty = quantity - previousStock;
-        nextStock = quantity;
-      } else {
-        throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid movement type");
+      if (quantity === previousStock) {
+        throw new ApiError(
+          HTTP_STATUS.BAD_REQUEST,
+          "New quantity must be different from current stock",
+        );
       }
 
-      const stockDiff = nextStock - previousStock;
+      let movementQty;
+      let movementType;
 
-      inventoryEntry.currentStock = nextStock;
+      if (quantity > previousStock) {
+        movementQty = quantity - previousStock;
+        movementType = "IN";
+      } else {
+        movementQty = previousStock - quantity;
+        movementType = "OUT";
+      }
 
-      item.currentStock += stockDiff;
+
+      inventoryEntry.currentStock = quantity;
+      item.currentStock += quantity - previousStock;
+
       await item.save({ session });
+
+      const existingMovementsCount = await StockMovement.countDocuments({
+        itemId,
+      }).session(session);
 
       stockMovement = await StockMovement.create(
         [
@@ -91,10 +90,13 @@ const runStockMovementTransaction = async (movementData) => {
             itemId,
             locationId,
             quantity: movementQty,
-            type,
+            type: movementType,
             reference: reference || "manual",
-            note: note || `Stock changed from ${previousStock} to ${quantity}`,
-            currentStock: nextStock,
+            note:
+              note ||
+              `Auto adjusted from ${previousStock} to ${quantity}`,
+            currentStock: quantity,
+            movementSequence: existingMovementsCount + 1,
           },
         ],
         { session },
@@ -107,11 +109,8 @@ const runStockMovementTransaction = async (movementData) => {
   return stockMovement[0];
 };
 
-export const addStockService = async (movementData) =>
-  runStockMovementTransaction({ ...movementData, type: "IN" });
-
-export const removeStockService = async (movementData) =>
-  runStockMovementTransaction({ ...movementData, type: "OUT" });
+export const adjustStockService = async (movementData) =>
+  runStockMovementTransaction(movementData);
 
 const getPaginatedHistory = async (filter = {}, query = {}) => {
   const { page, limit, skip } = getPagination({
@@ -144,7 +143,15 @@ export const getStockHistoryServices = async (itemId, query = {}) => {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, "Item not found");
   }
 
-  return getPaginatedHistory({ itemId }, query);
+  const { data, pagination } = await getPaginatedHistory({ itemId }, query);
+
+  return {
+    data: data.map((movement) => ({
+      ...movement.toObject(),
+      movementDisplayId: `HIS-${movement.movementSequence}`,
+    })),
+    pagination,
+  };
 };
 
 export const getAllStockHistoryServices = async (query = {}) => {

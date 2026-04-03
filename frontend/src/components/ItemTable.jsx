@@ -1,7 +1,13 @@
 import { Table } from "antd";
 import { getItemColumns } from "./itemColumns";
 
-const ItemTable = ({ items, loading, pagination, onPaginationChange }) => {
+const ItemTable = ({
+  items,
+  loading,
+  pagination,
+  onPaginationChange,
+  onRowClick,
+}) => {
   const columns = getItemColumns({
     nameTitle: "Name",
     showPrice: true,
@@ -22,6 +28,10 @@ const ItemTable = ({ items, loading, pagination, onPaginationChange }) => {
       columns={columns}
       dataSource={items}
       loading={loading}
+      onRow={(record) => ({
+        onClick: () => onRowClick && onRowClick(record),
+        style: { cursor: onRowClick ? "pointer" : "default" },
+      })}
       pagination={
         pagination
           ? {

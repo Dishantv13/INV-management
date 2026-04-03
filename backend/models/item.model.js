@@ -17,6 +17,16 @@ const itemSchema = new Schema(
       required: true,
       min: 0.01,
     },
+    openingStock: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    closingStock: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     currentStock: {
       type: Number,
       default: 0,

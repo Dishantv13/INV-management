@@ -7,13 +7,17 @@ import {
   InputNumber,
   Select,
   Space,
+  Typography,
 } from "antd";
+import { useEffect } from "react";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 
+const { Text } = Typography;
 
 const StockAdjustmentForm = ({
   items,
   selectedItemDetails,
+  initialItemId,
   locations,
   loading,
   itemFetching,
@@ -30,6 +34,17 @@ const StockAdjustmentForm = ({
     { value: "adjustment", label: "Adjustment" },
   ];
 
+  useEffect(() => {
+    if (initialItemId) {
+      form.setFieldsValue({
+        itemId: initialItemId,
+        adjustments: [{}],
+      });
+
+      onItemChange?.(initialItemId);
+    }
+  }, [initialItemId]);
+
   const submitAdjustments = async () => {
     try {
       const values = await form.validateFields();
@@ -45,14 +60,16 @@ const StockAdjustmentForm = ({
 
   const handleItemSelect = (itemId) => {
     onItemChange?.(itemId);
-    form.setFieldValue("adjustments", [{ type: "IN" }]);
+    form.setFieldValue("adjustments", [{}]);
   };
 
   const findCurrentStock = (locationId) => {
     if (!selectedItemDetails || !selectedItemDetails.inventory) return 0;
+
     const entry = selectedItemDetails.inventory.find(
       (inv) => String(inv.locationId) === String(locationId),
     );
+
     return entry?.currentStock || 0;
   };
 
@@ -63,8 +80,8 @@ const StockAdjustmentForm = ({
     label: `${loc.name} (${loc.locationNo})`,
   }));
 
-  const availableLocationIds = (selectedItemDetails?.inventory || []).map((inv) =>
-    String(inv.locationId),
+  const availableLocationIds = (selectedItemDetails?.inventory || []).map(
+    (inv) => String(inv.locationId),
   );
 
   const filteredLocationOptions = locationOptions.filter((opt) =>
@@ -78,7 +95,7 @@ const StockAdjustmentForm = ({
         layout="vertical"
         initialValues={{
           reference: "manual",
-          adjustments: [{ type: "IN" }],
+          adjustments: [{}],
         }}
       >
         <Form.Item
@@ -120,6 +137,7 @@ const StockAdjustmentForm = ({
             <>
               {fields.map((field, index) => {
                 const { key, ...restField } = field;
+
                 const currentRow = adjustments[index] || {};
                 const currentLocationId = currentRow.locationId;
 
@@ -135,6 +153,12 @@ const StockAdjustmentForm = ({
                 );
 
                 const currentStock = findCurrentStock(currentLocationId);
+                const enteredQty = currentRow.quantity;
+
+                const diff =
+                  enteredQty !== undefined
+                    ? enteredQty - currentStock
+                    : null;
 
                 return (
                   <Space
@@ -171,25 +195,8 @@ const StockAdjustmentForm = ({
                         disabled
                         style={{
                           width: "100%",
-                          color: "rgba(0, 0, 0, 0.85)",
                           backgroundColor: "#f5f5f5",
                         }}
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      {...restField}
-                      name={[field.name, "type"]}
-                      label={index === 0 ? "Type" : ""}
-                      rules={[
-                        { required: true, message: "Please select type" },
-                      ]}
-                      style={{ width: 140 }}
-                    >
-                      <Select
-                        options={[
-                          { value: "IN", label: "Add" },
-                          { value: "OUT", label: "Remove" },
-                        ]}
                       />
                     </Form.Item>
 
@@ -209,12 +216,9 @@ const StockAdjustmentForm = ({
                               field.name,
                               "locationId",
                             ]);
-                            const type = getFieldValue([
-                              "adjustments",
-                              field.name,
-                              "type",
-                            ]);
-                            const latestStock = findCurrentStock(locationId);
+
+                            const latestStock =
+                              findCurrentStock(locationId);
 
                             if (value === undefined || value === null) {
                               return Promise.resolve();
@@ -222,22 +226,16 @@ const StockAdjustmentForm = ({
 
                             if (value <= 0) {
                               return Promise.reject(
-                                new Error("Quantity must be greater than 0"),
-                              );
-                            }
-
-                            if (type === "IN" && value <= latestStock) {
-                              return Promise.reject(
                                 new Error(
-                                  `For Add, value must be greater than current (${latestStock})`,
+                                  "Quantity must be greater than 0",
                                 ),
                               );
                             }
 
-                            if (type === "OUT" && value >= latestStock) {
+                            if (value === latestStock) {
                               return Promise.reject(
                                 new Error(
-                                  `For Remove, value must be less than current (${latestStock})`,
+                                  "New stock must be different from current",
                                 ),
                               );
                             }
@@ -249,6 +247,29 @@ const StockAdjustmentForm = ({
                       style={{ width: 180 }}
                     >
                       <InputNumber min={0} style={{ width: "100%" }} />
+                    </Form.Item>
+
+                    <Form.Item
+                      label={index === 0 ? "Adjustment" : ""}
+                      style={{ width: 180 }}
+                    >
+                      <Input
+                        value={
+                          diff === null || !currentLocationId
+                            ? ""
+                            : diff > 0
+                              ? `+${diff} (Added)`
+                              : `${diff} (Removed)`
+                        }
+                        readOnly
+                        disabled
+                        style={{
+                          color:
+                            diff > 0 ? "#52c41a" : diff < 0 ? "#ff4d4f" : undefined,
+                          fontWeight: 500,
+                          backgroundColor: "#fafafa",
+                        }}
+                      />
                     </Form.Item>
 
                     <Button
@@ -267,7 +288,7 @@ const StockAdjustmentForm = ({
 
               <Button
                 type="dashed"
-                onClick={() => add({ type: "IN" })}
+                onClick={() => add({})}
                 icon={<PlusOutlined />}
                 disabled={!form.getFieldValue("itemId")}
               >

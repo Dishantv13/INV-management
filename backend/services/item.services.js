@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import { Item } from "../models/item.model.js";
 import { Location } from "../models/location.model.js";
-import { StockMovement } from "../models/stockMovement.model.js";
 import { HTTP_STATUS } from "../utils/httpCode.js";
 import ApiError from "../utils/apiError.js";
 import { getPagination, getPaginationMeta } from "../utils/pagination.js";
@@ -27,18 +26,24 @@ export const createItemService = async (itemData) => {
 
   try {
     await session.withTransaction(async () => {
-      newItem = await Item.findOneAndUpdate(
-        { sku: normalizedSku },
-        {
-          $set: {
-            name: name.trim(),
-            price,
-            lowStockThreshold:
-              lowStockThreshold !== undefined ? lowStockThreshold : 5,
-          },
-        },
-        { upsert: true, new: true, session },
-      );
+      newItem = await Item.findOne({ sku: normalizedSku }).session(session);
+      const isNew = !newItem;
+
+      if (isNew) {
+        newItem = new Item({
+          sku: normalizedSku,
+          name: name.trim(),
+          price,
+          lowStockThreshold:
+            lowStockThreshold !== undefined ? lowStockThreshold : 5,
+        });
+      } else {
+        newItem.name = name.trim();
+        newItem.price = price;
+        if (lowStockThreshold !== undefined) {
+          newItem.lowStockThreshold = lowStockThreshold;
+        }
+      }
 
       if (initialStocks && Array.isArray(initialStocks)) {
         let totalNewStock = 0;
@@ -73,33 +78,48 @@ export const createItemService = async (itemData) => {
             );
           }
 
+          const qty = Number(quantity);
+
           newItem.inventory.push({
             locationId,
-            currentStock: quantity || 0,
+            currentStock: qty || 0,
           });
 
-          if ((quantity || 0) > 0) {
-            totalNewStock += quantity;
-            await StockMovement.create(
-              [
-                {
-                  itemId: newItem._id,
-                  locationId,
-                  quantity,
-                  type: "IN",
-                  reference: "manual",
-                  note: "Initial stock on item creation",
-                  currentStock: quantity,
-                },
-              ],
-              { session },
-            );
+          if (qty > 0) {
+            totalNewStock += qty;
           }
+
+          // if ((qty || 0) > 0) {
+          //   totalNewStock += qty;
+          // const existingMovementsCount = await StockMovement.countDocuments({
+          //   itemId: newItem._id,
+          // }).session(session);
+
+          // await StockMovement.create(
+          //   [
+          //     {
+          //       itemId: newItem._id,
+          //       locationId,
+          //       qty,
+          //       type: "IN",
+          //       reference: "manual",
+          //       note: "Initial stock on item creation",
+          //       currentStock: qty,
+          //       movementSequence: existingMovementsCount + 1,
+          //     },
+          //   ],
+          //   { session },
+          // );
+          // }
         }
 
-        if (totalNewStock > 0) {
+        if (isNew) {
+          newItem.openingStock = totalNewStock;
+          newItem.currentStock = totalNewStock;
+        } else {
           newItem.currentStock += totalNewStock;
         }
+
         await newItem.save({ session });
       }
     });
@@ -136,6 +156,7 @@ export const getAllItemsService = async (query = {}) => {
   });
   const totalItems = await Item.countDocuments(filter);
   const items = await Item.find(filter)
+    .populate("inventory.locationId", "name locationNo")
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
@@ -247,5 +268,46 @@ export const getDashboardStatsService = async () => {
     lowStockItems,
     totalStockValue,
     totalStockUnits,
+  };
+};
+
+export const getItemLocationServices1 = async (itemId) => {
+
+  const lowStockThreshold = await Item.findById(itemId).select("lowStockThreshold");
+  const item = await Item.findById(itemId)
+    .populate(
+      "inventory.locationId",
+      "name locationNo",
+    )
+  if (!item) {
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, "Item not found");
+  }
+
+  const filteredInventory = (item.inventory || []).filter(
+    (inv) => inv.locationId !== null
+  );
+
+  return {
+    lowStockThreshold: lowStockThreshold.lowStockThreshold,
+    inventory: filteredInventory,
+  };
+};
+
+export const getItemLocationServices = async (itemId) => {
+  const item = await Item.findById(itemId)
+    .select("lowStockThreshold inventory")
+    .populate("inventory.locationId", "name locationNo");
+
+  if (!item) {
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, "Item not found");
+  }
+
+  const filteredInventory = (item.inventory || []).filter(
+    (inv) => inv.locationId !== null
+  );
+
+  return {
+    lowStockThreshold: item.lowStockThreshold,
+    inventory: filteredInventory,
   };
 };

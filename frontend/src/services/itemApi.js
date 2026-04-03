@@ -65,6 +65,14 @@ export const itemApi = baseApi.injectEndpoints({
       providesTags: (result) =>
         tagListWithIds(TAG_TYPES.ITEMS, result?.data || []),
     }),
+    getItemLocation: builder.query({
+      query: (id) => ITEM_URL.ITEM_LOCATION(id),
+      transformResponse: (response) => ({
+        data: response?.data || [],
+        lowStockThreshold: response?.data || null,
+      }),
+      providesTags: (result, error, id) => [{ type: TAG_TYPES.ITEMS, id }],
+    }),
   }),
 });
 
@@ -76,4 +84,5 @@ export const {
   useGetItemByIdQuery,
   useLazyGetItemByIdQuery,
   useGetDashboardLowStockQuery,
+  useGetItemLocationQuery,
 } = itemApi;

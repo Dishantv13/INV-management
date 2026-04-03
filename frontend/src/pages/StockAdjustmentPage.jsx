@@ -1,9 +1,10 @@
 import { message } from "antd";
+import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 import PageHeaderBar from "../components/PageHeaderBar";
 import StockAdjustmentForm from "../components/StockAdjustmentForm";
 import {
-  useStockInMutation,
-  useStockOutMutation,
+  useAdjustStockMutation
 } from "../services/stockMovementApi";
 import {
   useLazyGetItemByIdQuery,
@@ -13,6 +14,8 @@ import { useGetActiveLocationsQuery } from "../services/locationApi";
 
 const StockAdjustmentPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const itemIdFromUrl = searchParams.get("itemId");
 
   const {
     data: itemsResponse = [],
@@ -27,13 +30,13 @@ const StockAdjustmentPage = () => {
   const [fetchItemDetails, { data: selectedItemDetails, isFetching: isItemFetching }] =
     useLazyGetItemByIdQuery();
 
-  const [stockIn, { isLoading: isStockInLoading }] = useStockInMutation();
-  const [stockOut, { isLoading: isStockOutLoading }] = useStockOutMutation();
+  const [adjustStock, { isLoading: isAdjusting }] = useAdjustStockMutation();
+
 
   const handleItemChange = async (itemId) => {
-    if (!itemId) {
-      return;
-    }
+    if (!itemId) return;
+
+    setSearchParams({ itemId });
 
     try {
       await fetchItemDetails(itemId).unwrap();
@@ -59,10 +62,7 @@ const StockAdjustmentPage = () => {
           reference,
           note,
         };
-
-        return row.type === "IN"
-          ? stockIn(payload).unwrap()
-          : stockOut(payload).unwrap();
+        return adjustStock(payload).unwrap();
       }),
     );
 
@@ -99,7 +99,7 @@ const StockAdjustmentPage = () => {
   };
 
   const loading =
-    itemsLoading || isItemFetching || isStockInLoading || isStockOutLoading || locationsLoading;
+    itemsLoading || isItemFetching || locationsLoading;
 
   return (
     <div>
@@ -111,10 +111,11 @@ const StockAdjustmentPage = () => {
       <StockAdjustmentForm
         items={itemsResponse}
         selectedItemDetails={selectedItemDetails}
+        initialItemId={itemIdFromUrl}
         locations={locationsResponse.data}
         loading={loading}
         itemFetching={isItemFetching}
-        itemsLoading={itemsLoading}
+        itemsLoading={isAdjusting}
         onSubmit={handleSubmit}
         onItemChange={handleItemChange}
       />

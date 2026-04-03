@@ -4,11 +4,11 @@ export const ITEM_URL = {
   BY_ID: (id) => `/items/${id}`,
   DASHBOARD_STATS: "/items/dashboard-stats",
   DASHBOARD_LOW_STOCK: "/items/dashboard/low-stock",
+  ITEM_LOCATION: (id) => `/items/${id}/locations`,
 };
 
 export const STOCK_URL = {
-  IN: "/stock/in",
-  OUT: "/stock/out",
+  ADJUST: "/stock/adjust",
   LOCATIONS: (itemId) => `/stock/locations/${itemId}`,
   HISTORY_ALL: "/stock/history",
   HISTORY: (itemId) => `/stock/history/${itemId}`,
@@ -31,4 +31,6 @@ export const ROUTE_URL = {
   LOCATIONS: "/locations",
   LOCATION_ITEMS: (locationId = ":locationId") =>
     `/locations/${locationId}/items`,
+  ITEM_DETAILS: (itemId = ":itemId") => `/items/${itemId}`,
+  ITEM_REPORT: "/item-report",
 };

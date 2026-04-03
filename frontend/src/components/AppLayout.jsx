@@ -38,6 +38,11 @@ const navigationItems = [
     icon: <HistoryOutlined />,
     label: <Link to={ROUTE_URL.STOCK_HISTORY}>Stock History</Link>,
   },
+  {
+    key: ROUTE_URL.ITEM_REPORT,
+    icon: <BarChartOutlined />,
+    label: <Link to={ROUTE_URL.ITEM_REPORT}>Item Report</Link>,
+  },
 ];
 
 const AppLayout = ({ children }) => {
