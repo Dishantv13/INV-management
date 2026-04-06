@@ -37,6 +37,10 @@ const stockMovementSchema = new Schema(
       required: true,
       min: 0,
     },
+    // closingStock: {
+    //   type: Number,
+    //   required: true,
+    // },
     movementSequence: {
       type: Number,
       required: true,

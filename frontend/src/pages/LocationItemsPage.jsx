@@ -73,7 +73,7 @@ const LocationItemsPage = () => {
       />
 
       <ViewLocationItem
-        type="location" 
+        type="location"
         headerData={{ ...location, totalItems }}
         columns={itemColumns}
         data={itemsByLocationResponse.data}

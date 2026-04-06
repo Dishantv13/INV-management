@@ -44,7 +44,6 @@ const StockHistoryPage = () => {
     } else {
       nextParams.delete("search");
     }
-
     nextParams.set("page", String(nextPage));
     nextParams.set("limit", String(nextLimit));
     setSearchParams(nextParams);
@@ -76,7 +75,7 @@ const StockHistoryPage = () => {
           style={{ width: 300 }}
         />
       </Card>
-      <StockHistoryTable  
+      <StockHistoryTable
         showItem={true}
         currentStock={true}
         data={historyResponse.data}

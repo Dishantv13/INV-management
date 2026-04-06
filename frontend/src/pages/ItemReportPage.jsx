@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card, Typography, Empty, message } from "antd";
 import { useSearchParams } from "react-router-dom";
 import PageHeaderBar from "../components/PageHeaderBar";
@@ -32,6 +32,7 @@ const ItemReportPage = () => {
     if (!selectedItemId) {
       message.warning("Please select an item first");
       return;
+
     }
 
     try {

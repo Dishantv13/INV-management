@@ -1,6 +1,5 @@
 import { message } from "antd";
 import { useSearchParams } from "react-router-dom";
-import { useEffect } from "react";
 import PageHeaderBar from "../components/PageHeaderBar";
 import StockAdjustmentForm from "../components/StockAdjustmentForm";
 import {

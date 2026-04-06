@@ -25,7 +25,6 @@ const itemSchema = new Schema(
     closingStock: {
       type: Number,
       default: 0,
-      min: 0,
     },
     currentStock: {
       type: Number,

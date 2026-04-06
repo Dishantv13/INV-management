@@ -13,7 +13,7 @@ const parsePositiveInt = (value, fallback) => {
 
 const ItemListPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const page = parsePositiveInt(searchParams.get("page")) || 1;
   const limit = parsePositiveInt(searchParams.get("limit")) || 10;
   const search = searchParams.get("search") || "";

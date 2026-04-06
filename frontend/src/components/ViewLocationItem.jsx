@@ -40,18 +40,6 @@ const itemHeaderConfig = [
   { key: "price", label: "Price", render: (val) => `Rs. ${Number(val || 0).toFixed(2)}` },
   { key: "currentStock", label: "Total Stock" },
   { key: "lowStockThreshold", label: "Low Stock Threshold" },
-  {
-    key: "isLowStock",
-    label: "Status",
-    render: (_, data) => {
-      const isLow = data.currentStock <= data.lowStockThreshold;
-      return (
-        <Tag color={isLow ? "error" : "success"}>
-          {isLow ? "Low Stock" : "Stock OK"}
-        </Tag>
-      );
-    },
-  },
 ];
 
 const ViewLocationItem = ({

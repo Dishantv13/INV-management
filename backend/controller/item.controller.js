@@ -40,6 +40,6 @@ export const getDashboardLowStock = asyncHandler(async (req, res) => {
 
 export const getItemLocation = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const itemLocation = await getItemLocationServices(id);
-  successResponse(res, itemLocation, HTTP_STATUS.OK, ITEM.RETRIEVED);
-});
+  const { data, pagination } = await getItemLocationServices(id, req.query);
+  successResponse(res, data, HTTP_STATUS.OK, ITEM.RETRIEVED, pagination);
+});

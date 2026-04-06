@@ -90,8 +90,8 @@ export const updateLocationStatusService = async (locationId, status) => {
 };
 
 export const deleteLocationService = async (locationId) => {
-  const itemExist = await Item.exists({"inventory.locationId" : locationId})
-  if(itemExist){
+  const itemExist = await Item.exists({ "inventory.locationId": locationId })
+  if (itemExist) {
     throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Cannot delete location: Items are still assigned to this location");
   }
   const location = await Location.findByIdAndDelete(locationId);

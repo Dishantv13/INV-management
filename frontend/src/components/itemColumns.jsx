@@ -20,7 +20,7 @@ export const getItemColumns = ({
   globalThreshold = null,
 } = {}) => {
   const columns = []
-  
+
   if (showName) {
     columns.push({
       title: nameTitle,

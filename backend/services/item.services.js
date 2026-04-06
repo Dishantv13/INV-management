@@ -105,6 +105,7 @@ export const createItemService = async (itemData) => {
           //       reference: "manual",
           //       note: "Initial stock on item creation",
           //       currentStock: qty,
+          //       closingStock: 0,
           //       movementSequence: existingMovementsCount + 1,
           //     },
           //   ],
@@ -271,43 +272,63 @@ export const getDashboardStatsService = async () => {
   };
 };
 
-export const getItemLocationServices1 = async (itemId) => {
-
-  const lowStockThreshold = await Item.findById(itemId).select("lowStockThreshold");
-  const item = await Item.findById(itemId)
-    .populate(
-      "inventory.locationId",
-      "name locationNo",
-    )
-  if (!item) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, "Item not found");
+export const getItemLocationServices = async (itemId, query = {}) => {
+  if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid Item ID format");
   }
 
-  const filteredInventory = (item.inventory || []).filter(
-    (inv) => inv.locationId !== null
-  );
-
-  return {
-    lowStockThreshold: lowStockThreshold.lowStockThreshold,
-    inventory: filteredInventory,
-  };
-};
-
-export const getItemLocationServices = async (itemId) => {
-  const item = await Item.findById(itemId)
-    .select("lowStockThreshold inventory")
-    .populate("inventory.locationId", "name locationNo");
+  const item = await Item.findById(itemId).select("lowStockThreshold");
 
   if (!item) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, "Item not found");
   }
 
-  const filteredInventory = (item.inventory || []).filter(
-    (inv) => inv.locationId !== null
-  );
+  const { page, limit, skip } = getPagination({
+    page: query.page,
+    limit: query.limit,
+    skip: query.skip,
+  });
+
+  const aggregationPipeline = [
+    { $match: { _id: new mongoose.Types.ObjectId(String(itemId)) } },
+    { $unwind: "$inventory" },
+    {
+      $lookup: {
+        from: "locations",
+        localField: "inventory.locationId",
+        foreignField: "_id",
+        as: "locationDetails",
+      },
+    },
+    { $unwind: "$locationDetails" },
+    {
+      $project: {
+        _id: 0,
+        locationId: "$locationDetails",
+        currentStock: "$inventory.currentStock",
+      },
+    },
+  ];
+
+  const totalResults = await Item.aggregate([
+    ...aggregationPipeline,
+    { $count: "total" },
+  ]);
+
+  const totalItems = totalResults.length > 0 ? totalResults[0].total : 0;
+
+  const data = await Item.aggregate([
+    ...aggregationPipeline,
+    { $sort: { "locationId.name": 1 } },
+    { $skip: skip },
+    { $limit: limit },
+  ]);
 
   return {
-    lowStockThreshold: item.lowStockThreshold,
-    inventory: filteredInventory,
+    data: {
+      lowStockThreshold: item.lowStockThreshold,
+      inventory: data,
+    },
+    pagination: getPaginationMeta(totalItems, page, limit),
   };
 };

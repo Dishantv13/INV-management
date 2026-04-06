@@ -1,4 +1,3 @@
-import React from "react";
 import { Card, Space, Select, Button, Typography } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 

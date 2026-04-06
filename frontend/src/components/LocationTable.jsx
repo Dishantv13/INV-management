@@ -94,18 +94,17 @@ const LocationTable = ({
       pagination={
         pagination
           ? {
-              current: pagination.page,
-              pageSize: pagination.limit,
-              total: pagination.totalItems,
-              onChange: onPaginationChange,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              pageSizeOptions: ["5", "10", "20", "50"],
-              showTotal: (total, range) =>
-                `Showing ${range[0]}-${range[1]} of ${total} ${
-                  total === 1 ? "location" : "locations"
-                }`,
-            }
+            current: pagination.page,
+            pageSize: pagination.limit,
+            total: pagination.totalItems,
+            onChange: onPaginationChange,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            pageSizeOptions: ["5", "10", "20", "50"],
+            showTotal: (total, range) =>
+              `Showing ${range[0]}-${range[1]} of ${total} ${total === 1 ? "location" : "locations"
+              }`,
+          }
           : false
       }
     />

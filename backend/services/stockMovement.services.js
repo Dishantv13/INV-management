@@ -77,12 +77,15 @@ const runStockMovementTransaction = async (movementData) => {
 
       inventoryEntry.currentStock = quantity;
       item.currentStock += quantity - previousStock;
+      item.closingStock += quantity - previousStock;
 
       await item.save({ session });
 
       const existingMovementsCount = await StockMovement.countDocuments({
         itemId,
       }).session(session);
+
+      // const netChange = quantity - previousStock;
 
       stockMovement = await StockMovement.create(
         [
@@ -96,6 +99,7 @@ const runStockMovementTransaction = async (movementData) => {
               note ||
               `Auto adjusted from ${previousStock} to ${quantity}`,
             currentStock: quantity,
+            // closingStock: netChange,
             movementSequence: existingMovementsCount + 1,
           },
         ],

@@ -9,10 +9,8 @@ export const ITEM_URL = {
 
 export const STOCK_URL = {
   ADJUST: "/stock/adjust",
-  LOCATIONS: (itemId) => `/stock/locations/${itemId}`,
   HISTORY_ALL: "/stock/history",
   HISTORY: (itemId) => `/stock/history/${itemId}`,
-  ITEMS_BY_LOCATION: (locationId) => `/stock/${locationId}/items`,
 };
 
 export const LOCATION_URL = {

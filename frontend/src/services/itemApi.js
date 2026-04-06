@@ -66,12 +66,21 @@ export const itemApi = baseApi.injectEndpoints({
         tagListWithIds(TAG_TYPES.ITEMS, result?.data || []),
     }),
     getItemLocation: builder.query({
-      query: (id) => ITEM_URL.ITEM_LOCATION(id),
+      query: (params) => {
+        const { id, page = 1, limit = 5 } = params || {};
+        return {
+          url: ITEM_URL.ITEM_LOCATION(String(id || "")),
+          params: { page, limit },
+        };
+      },
       transformResponse: (response) => ({
-        data: response?.data || [],
-        lowStockThreshold: response?.data || null,
+        data: response?.data?.inventory || [],
+        lowStockThreshold: response?.data?.lowStockThreshold || null,
+        pagination: response?.pagination || null,
       }),
-      providesTags: (result, error, id) => [{ type: TAG_TYPES.ITEMS, id }],
+      providesTags: (result, error, params) => [
+        { type: TAG_TYPES.ITEMS, id: params?.id },
+      ],
     }),
   }),
 });
