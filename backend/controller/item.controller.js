@@ -5,6 +5,8 @@ import {
   getDashboardStatsService,
   getDashboardLowStockService,
   getItemLocationServices,
+  updateItemService,
+  deleteItemService,
 } from "../services/item.services.js";
 import { HTTP_STATUS } from "../utils/httpCode.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -42,4 +44,17 @@ export const getItemLocation = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { data, pagination } = await getItemLocationServices(id, req.query);
   successResponse(res, data, HTTP_STATUS.OK, ITEM.RETRIEVED, pagination);
-});
+});
+
+export const updateItem = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+  const updatedItem = await updateItemService(id, updateData);
+  successResponse(res, updatedItem, HTTP_STATUS.OK, ITEM.UPDATED);
+});
+
+export const deleteItem = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const deletedItem = await deleteItemService(id);
+  successResponse(res, deletedItem, HTTP_STATUS.OK, ITEM.DELETED);
+});

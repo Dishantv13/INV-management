@@ -1,10 +1,10 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Button } from "antd";
-import { ArrowLeftOutlined } from "@ant-design/icons";
+import { Button, Space, message } from "antd";
+import { ArrowLeftOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import PageHeaderBar from "../components/PageHeaderBar";
 import ViewLocationItem from "../components/ViewLocationItem";
 import { getItemColumns } from "../components/itemColumns";
-import { useGetItemByIdQuery, useGetItemLocationQuery } from "../services/itemApi";
+import { useGetItemByIdQuery, useGetItemLocationQuery, useDeleteItemMutation } from "../services/itemApi";
 import { ROUTE_URL } from "../enum/url";
 
 const parsePositiveInt = (value, fallback) => {
@@ -30,6 +30,8 @@ const ItemDetailsPage = () => {
     { skip: !itemId },
   );
 
+  const [deleteItem, { isLoading: isDeleting }] = useDeleteItemMutation();
+
   const locations = data?.data || [];
   const lowStockThreshold = data?.lowStockThreshold || null;
   const pagination = data?.pagination || null;
@@ -40,6 +42,16 @@ const ItemDetailsPage = () => {
     nextParams.set("limit", String(newPageSize));
     setSearchParams(nextParams);
   };
+
+  const handleDelete = async () => {
+    try {
+      await deleteItem(itemId).unwrap();
+      message.success("Item deleted successfully");
+      navigate(ROUTE_URL.ITEMS);
+    } catch (error) {
+      message.error(error?.data?.message || "Failed to delete item");
+    }
+  }
 
   const inventoryColumns = getItemColumns({
     showName: false,
@@ -56,12 +68,33 @@ const ItemDetailsPage = () => {
         title={item?.name ? `Stock Details: ${item.name}` : "Item Details"}
         subtitle="Distribution across physical locations"
         rightNode={
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={() => navigate(ROUTE_URL.ITEMS)}
-          >
-            Back to Items
-          </Button>
+          <Space>
+            <Button
+              icon={<EditOutlined />}
+              type="primary"
+              style={{ borderRadius: 8 }}
+              onClick={() => navigate(ROUTE_URL.ITEM_EDIT(itemId))}
+            >
+              Edit Item
+            </Button>
+            <Button
+              icon={<DeleteOutlined />}
+              type="primary"
+              danger
+              loading={isDeleting}
+              onClick={handleDelete}
+              style={{ borderRadius: 8 }}
+            >
+              Delete Item
+            </Button>
+            <Button
+              icon={<ArrowLeftOutlined />}
+              style={{ borderRadius: 8 }}
+              onClick={() => navigate(ROUTE_URL.ITEMS)}
+            >
+              Back to Items
+            </Button>
+          </Space>
         }
       />
 

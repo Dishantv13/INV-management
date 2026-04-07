@@ -1,4 +1,3 @@
-
 export const ITEM_URL = {
   BASE: "/items",
   BY_ID: (id) => `/items/${id}`,
@@ -24,6 +23,7 @@ export const ROUTE_URL = {
   DASHBOARD: "/",
   ITEMS: "/items",
   ITEM_ADD: "/items/add",
+  ITEM_EDIT: (itemId = ":itemId") => `/items/edit/${itemId}`,
   STOCK_ADJUSTMENT: "/stock-adjustment",
   STOCK_HISTORY: "/stock/history",
   LOCATIONS: "/locations",

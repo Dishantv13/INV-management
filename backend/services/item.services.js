@@ -157,10 +157,10 @@ export const getAllItemsService = async (query = {}) => {
   });
   const totalItems = await Item.countDocuments(filter);
   const items = await Item.find(filter)
-    .populate("inventory.locationId", "name locationNo")
     .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .select("-inventory");
 
   return {
     data: items.map((item) => ({
@@ -212,7 +212,7 @@ export const getDashboardLowStockService = async (query = {}) => {
         currentStockAtLocation: "$inventory.currentStock",
         locationName: "$locationDetails.name",
         locationNo: "$locationDetails.locationNo",
-        locationId: "$locationDetails._id",
+        // locationId: "$locationDetails._id",
       },
     },
   ];
@@ -331,4 +331,111 @@ export const getItemLocationServices = async (itemId, query = {}) => {
     },
     pagination: getPaginationMeta(totalItems, page, limit),
   };
+};
+
+export const updateItemService = async (itemId, updateData) => {
+  const { name, price, lowStockThreshold, initialStocks } = updateData;
+
+  if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid Item ID");
+  }
+
+  const session = await mongoose.startSession();
+  let updatedItem;
+
+  try {
+    await session.withTransaction(async () => {
+      updatedItem = await Item.findById(itemId).session(session);
+
+      if (!updatedItem) {
+        throw new ApiError(HTTP_STATUS.NOT_FOUND, "Item not found");
+      }
+
+      if (name) updatedItem.name = name.trim();
+      if (price !== undefined) {
+        if (typeof price !== "number" || Number.isNaN(price) || price <= 0) {
+          throw new ApiError(
+            HTTP_STATUS.BAD_REQUEST,
+            "Price must be greater than zero",
+          );
+        }
+        updatedItem.price = price;
+      }
+      if (lowStockThreshold !== undefined) {
+        updatedItem.lowStockThreshold = lowStockThreshold;
+      }
+
+      if (initialStocks && Array.isArray(initialStocks)) {
+        let totalNewStock = 0;
+
+        for (const stock of initialStocks) {
+          const { location: locationId, quantity } = stock;
+
+          if (!mongoose.Types.ObjectId.isValid(locationId)) {
+            throw new ApiError(
+              HTTP_STATUS.BAD_REQUEST,
+              `Invalid location ID: ${locationId}`,
+            );
+          }
+
+          const locationExists =
+            await Location.findById(locationId).session(session);
+          if (!locationExists) {
+            throw new ApiError(
+              HTTP_STATUS.NOT_FOUND,
+              `Location not found: ${locationId}`,
+            );
+          }
+
+          const existingInventory = updatedItem.inventory.find(
+            (inv) => String(inv.locationId) === String(locationId),
+          );
+
+          if (existingInventory) {
+            throw new ApiError(
+              HTTP_STATUS.BAD_REQUEST,
+              `Item already has stock mapped to location: ${locationExists.name}`,
+            );
+          }
+
+          const qty = Number(quantity) || 0;
+
+          updatedItem.inventory.push({
+            locationId,
+            currentStock: qty,
+          });
+
+          totalNewStock += qty;
+        }
+
+        updatedItem.currentStock += totalNewStock;
+        updatedItem.openingStock += totalNewStock;
+      }
+
+      await updatedItem.save({ session });
+    });
+  } finally {
+    await session.endSession();
+  }
+
+  return updatedItem;
+};
+
+export const deleteItemService = async (itemId) => {
+  if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid Item ID");
+  }
+
+  const item = await Item.findById(itemId);
+  if (!item) {
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, "Item not found");
+  }
+
+  if (item.currentStock > 0) {
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Item has stock, cannot delete");
+  }
+
+  await Item.findByIdAndDelete(itemId);
+
+  return item;
 };

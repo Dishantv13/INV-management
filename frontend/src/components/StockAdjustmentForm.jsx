@@ -7,12 +7,9 @@ import {
   InputNumber,
   Select,
   Space,
-  Typography,
 } from "antd";
 import { useEffect } from "react";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
-
-const { Text } = Typography;
 
 const StockAdjustmentForm = ({
   items,

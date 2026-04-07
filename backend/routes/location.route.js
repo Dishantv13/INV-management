@@ -3,8 +3,8 @@ import {
   createLocation,
   getAllLocations,
   getLocationById,
-  updateLocationStatus,
   deleteLocation,
+  updateLocationStatus,
   getItemsByLocation,
 } from "../controller/location.controller.js";
 

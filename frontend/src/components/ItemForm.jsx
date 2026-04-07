@@ -1,7 +1,7 @@
 import { Form, Input, InputNumber, Button, Divider, Space, Select } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 
-const ItemForm = ({
+const   ItemForm = ({
   form,
   onFinish,
   isLoading,
@@ -10,6 +10,8 @@ const ItemForm = ({
   onCancel,
   initialValues,
   submitText = "Submit",
+  disabledSku = false,
+  isUpdate = false,
 }) => {
   return (
     <Form
@@ -37,7 +39,7 @@ const ItemForm = ({
           ]}
           style={{ flex: 1 }}
         >
-          <Input placeholder="e.g. APPLE-MBP-M3" />
+          <Input placeholder="e.g. APPLE-MBP-M3" disabled={disabledSku} />
         </Form.Item>
 
         <Form.Item
@@ -71,18 +73,21 @@ const ItemForm = ({
         </Form.Item>
       </div>
 
-      <Divider orientation="left">Initial Stock by Location</Divider>
+      <Divider orientation="left">
+        {isUpdate ? "Add Stock to New Locations" : "Initial Stock by Location"}
+      </Divider>
 
       <Form.List
         name="initialStocks"
         rules={[
           {
             validator: async (_, value) => {
-              if (!value || value.length < 1) {
+              if (!isUpdate && (!value || value.length < 1)) {
                 return Promise.reject(
                   new Error("Please add at least one location stock row"),
                 );
               }
+              return Promise.resolve();
             },
           },
         ]}

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
-  getAllStockHistory,
   adjustStock,
+  getAllStockHistory,
   getStockHistory,
 } from "../controller/stockMovement.controller.js";
 

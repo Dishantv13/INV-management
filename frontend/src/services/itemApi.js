@@ -40,6 +40,29 @@ export const itemApi = baseApi.injectEndpoints({
       transformResponse: (response) => response?.data,
       invalidatesTags: tagList(TAG_TYPES.ITEMS),
     }),
+    updateItem: builder.mutation({
+      query: ({ id, ...payload }) => ({
+        url: ITEM_URL.BY_ID(id),
+        method: "PATCH",
+        body: payload,
+      }),
+      transformResponse: (response) => response?.data,
+      invalidatesTags: (result, error, { id }) => [
+        { type: TAG_TYPES.ITEMS, id },
+        ...tagList(TAG_TYPES.ITEMS),
+      ],
+    }),
+    deleteItem: builder.mutation({
+      query: (id) => ({
+        url: ITEM_URL.BY_ID(id),
+        method: "DELETE",
+      }),
+      transformResponse: (response) => response?.data,
+      invalidatesTags: (result, error, id) => [
+        { type: TAG_TYPES.ITEMS, id },
+        ...tagList(TAG_TYPES.ITEMS),
+      ],
+    }),
     getDashboardStats: builder.query({
       query: () => ({
         url: ITEM_URL.DASHBOARD_STATS,
@@ -89,6 +112,8 @@ export const {
   useGetItemsQuery,
   useGetItemsPaginatedQuery,
   useCreateItemMutation,
+  useUpdateItemMutation,
+  useDeleteItemMutation,
   useGetDashboardStatsQuery,
   useGetItemByIdQuery,
   useLazyGetItemByIdQuery,

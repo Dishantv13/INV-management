@@ -8,7 +8,7 @@ const LowStockTable = ({
   onPaginationChange,
 }) => {
   return (
-    <Card title="Critical Stock Watchlist" bordered={false}>
+    <Card title="Critical Stock Watchlist"  variant="borderless">
       <Table
         dataSource={items}
         columns={lowStockColumns}

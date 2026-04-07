@@ -77,7 +77,7 @@ const ItemReportPage = () => {
             totalEntries={reportData.length}
             data={reportData}
             loading={isFetching}
-            // pagination={{ pageSize: 15 }}
+            // pagination={{ pageSize: 20 }}
             scroll={{ x: 800 }}
           />
         </Card>

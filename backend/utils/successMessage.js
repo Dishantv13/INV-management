@@ -3,6 +3,8 @@ export const ITEM = {
     RETRIEVED: "Item retrieved successfully",
     DASHBOARD_STATS_RETRIEVED: "Dashboard stats retrieved successfully",    
     DASHBOARD_LOW_STOCK_RETRIEVED: "Dashboard low stock items retrieved successfully",
+    UPDATED: "Item updated successfully",
+    DELETED: "Item deleted successfully",
 }
 
 export const STOCK_MOVEMENT = {

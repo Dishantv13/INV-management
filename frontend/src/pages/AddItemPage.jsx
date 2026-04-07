@@ -18,7 +18,6 @@ import { useGetActiveLocationsQuery } from "../services/locationApi";
 const AddItemPage = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
-  const [messageApi, contextHolder] = message.useMessage();
 
   const [createItem, { isLoading: isCreating }] = useCreateItemMutation();
   const {
@@ -56,7 +55,7 @@ const AddItemPage = () => {
     const { initialStocks = [], name, sku, price, lowStockThreshold } = values;
 
     if (initialStocks.length === 0) {
-      messageApi.error("Please add at least one location with quantity");
+      message.error("Please add at least one location with quantity");
       return;
     }
 
@@ -69,16 +68,15 @@ const AddItemPage = () => {
         initialStocks,
       }).unwrap();
 
-      messageApi.success("Item created successfully across all locations");
+      message.success("Item created successfully across all locations");
       navigate(ROUTE_URL.ITEMS);
     } catch (error) {
-      messageApi.error(error?.data?.message || "Failed to create item");
+      message.error(error?.data?.message || "Failed to create item");
     }
   };
 
   return (
     <div>
-      {contextHolder}
       <PageHeaderBar
         title="Add Item"
         subtitle="Create one item and set initial stock by location"

@@ -10,7 +10,7 @@ const DashboardCard = ({ items }) => {
   return (
     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
       <Col xs={24} sm={12} lg={6}>
-        <Card bordered={false} hoverable>
+        <Card variant="borderless" hoverable>
           <Statistic
             title="Total Items"
             value={items?.totalItems || 0}
@@ -20,7 +20,7 @@ const DashboardCard = ({ items }) => {
       </Col>
 
       <Col xs={24} sm={12} lg={6}>
-        <Card bordered={false} hoverable>
+        <Card variant="borderless" hoverable>
           <Statistic
             title="Low Stock Alerts"
             value={items?.lowStockItems || 0}
@@ -33,7 +33,7 @@ const DashboardCard = ({ items }) => {
       </Col>
 
       <Col xs={24} sm={12} lg={6}>
-        <Card bordered={false} hoverable>
+        <Card variant="borderless" hoverable>
           <Statistic
             title="Inventory Value"
             value={items?.totalStockValue || 0}
@@ -45,7 +45,7 @@ const DashboardCard = ({ items }) => {
       </Col>
 
       <Col xs={24} sm={12} lg={6}>
-        <Card bordered={false} hoverable>
+        <Card variant="borderless" hoverable>
           <Statistic
             title="Total Units in Stock"
             value={items?.totalStockUnits || 0}

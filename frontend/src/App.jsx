@@ -8,6 +8,7 @@ import LocationsPage from "./pages/LocationsPage";
 import AddItemPage from "./pages/AddItemPage.jsx";
 import LocationItemsPage from "./pages/LocationItemsPage.jsx";
 import ItemDetailsPage from "./pages/ItemDetailsPage.jsx";
+import EditItemPage from "./pages/EditItemPage.jsx";
 import ItemReportPage from "./pages/ItemReportPage.jsx";
 import { Navigate } from "react-router-dom";
 import { ROUTE_URL } from "./enum/url";
@@ -27,6 +28,10 @@ function App() {
         <Route
           path={ROUTE_URL.ITEM_DETAILS()}
           element={<ItemDetailsPage />}
+        />
+        <Route
+          path={ROUTE_URL.ITEM_EDIT()}
+          element={<EditItemPage />}
         />
         <Route
           path={ROUTE_URL.STOCK_ADJUSTMENT}
