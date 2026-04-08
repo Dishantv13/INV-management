@@ -15,10 +15,10 @@ const validateCommonMovementData = ({ itemId, locationId, quantity }) => {
     throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Invalid locationId");
   }
 
-  if (typeof quantity !== "number" || Number.isNaN(quantity) || quantity <= 0) {
+  if (typeof quantity !== "number" || Number.isNaN(quantity) || quantity < 0) {
     throw new ApiError(
       HTTP_STATUS.BAD_REQUEST,
-      "Quantity must be greater than zero",
+      "Quantity must be greater than or equal to zero",
     );
   }
 };
@@ -85,8 +85,6 @@ const runStockMovementTransaction = async (movementData) => {
         itemId,
       }).session(session);
 
-      // const netChange = quantity - previousStock;
-
       stockMovement = await StockMovement.create(
         [
           {
@@ -99,7 +97,6 @@ const runStockMovementTransaction = async (movementData) => {
               note ||
               `Auto adjusted from ${previousStock} to ${quantity}`,
             currentStock: quantity,
-            // closingStock: netChange,
             movementSequence: existingMovementsCount + 1,
           },
         ],

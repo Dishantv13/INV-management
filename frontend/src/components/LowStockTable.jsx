@@ -13,7 +13,6 @@ const LowStockTable = ({
         dataSource={items}
         columns={lowStockColumns}
         loading={loading}
-        // rowKey="_id"
         locale={{
           emptyText: <Empty description="All stock levels are healthy!" />,
         }}

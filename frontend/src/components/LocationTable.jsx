@@ -58,6 +58,12 @@ const LocationTable = ({
       ),
     },
     {
+      title: "Total Stock",
+      dataIndex: "totalStock",
+      key: "totalStock",
+      width: "20%",
+    },
+    {
       title: "Actions",
       key: "actions",
       width: "25%",

@@ -12,7 +12,6 @@ const itemHeaderConfig = [
   { key: "price", label: "Price", render: (val) => `Rs. ${Number(val || 0).toFixed(2)}` },
   { key: "openingStock", label: "Opening Stock" },
   { key: "closingStock", label: "Closing Stock" },
-  { key: "currentStock", label: "Total Stock" },
 ];
 
 const StockHistoryTable = ({

@@ -221,10 +221,10 @@ const StockAdjustmentForm = ({
                               return Promise.resolve();
                             }
 
-                            if (value <= 0) {
+                            if (value < 0) {
                               return Promise.reject(
                                 new Error(
-                                  "Quantity must be greater than 0",
+                                  "Quantity must be greater than or equal to 0",
                                 ),
                               );
                             }

@@ -1,8 +1,10 @@
 import { Location } from "../models/location.model.js";
 import { Item } from "../models/item.model.js";
+import { StockMovement } from "../models/stockMovement.model.js";
 import { HTTP_STATUS } from "../utils/httpCode.js";
 import ApiError from "../utils/apiError.js";
 import { getPagination, getPaginationMeta } from "../utils/pagination.js";
+import mongoose from "mongoose";
 
 export const createLocationService = async (locationData) => {
   const { name, locationNo } = locationData;
@@ -48,14 +50,40 @@ export const getAllLocationsService = async (query = {}) => {
     filter.$or = [{ name: searchRegex }, { locationNo: searchRegex }];
   }
 
-  const totalItems = await Location.countDocuments(filter);
   const locations = await Location.find(filter)
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
+  const totalItems = await Location.countDocuments(filter);
+  const totalStockByLocation = await Item.aggregate([
+    {
+      $unwind: "$inventory",
+    },
+    {
+      $group: {
+        _id: "$inventory.locationId",
+        totalStock: { $sum: "$inventory.currentStock" },
+      },
+    },
+  ]);
+
+  const stockMap = {};
+  totalStockByLocation.forEach((item) => {
+    stockMap[item._id.toString()] = item.totalStock;
+  });
+
+  const locationsWithStock = locations.map((loc) => {
+    const locObj = loc.toObject();
+
+    return {
+      ...locObj,
+      totalStock: stockMap[loc._id.toString()] || 0,
+    };
+  });
+
   return {
-    data: locations,
+    data: locationsWithStock,
     pagination: getPaginationMeta(totalItems, page, limit),
   };
 };
@@ -90,14 +118,35 @@ export const updateLocationStatusService = async (locationId, status) => {
 };
 
 export const deleteLocationService = async (locationId) => {
-  const itemExist = await Item.exists({ "inventory.locationId": locationId })
+
+  const objectId = new mongoose.Types.ObjectId(locationId);
+  const itemExist = await Item.exists({
+    inventory: {
+      $elemMatch: {
+        locationId: objectId,
+        currentStock: { $gt: 0 }
+      }
+    }
+  });
+
   if (itemExist) {
     throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Cannot delete location: Items are still assigned to this location");
   }
-  const location = await Location.findByIdAndDelete(locationId);
+
+  await Item.updateMany({}, {
+    $pull: {
+      inventory: {
+        $or: [{ locationId: objectId }, { locationId: locationId }]
+      }
+    }
+  });
+
+  const location = await Location.findByIdAndDelete(objectId);
   if (!location) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, "Location not found");
   }
+  await StockMovement.deleteMany({ locationId: objectId });
+
   return location;
 };
 

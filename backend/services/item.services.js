@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Item } from "../models/item.model.js";
 import { Location } from "../models/location.model.js";
+import { StockMovement } from "../models/stockMovement.model.js";
 import { HTTP_STATUS } from "../utils/httpCode.js";
 import ApiError from "../utils/apiError.js";
 import { getPagination, getPaginationMeta } from "../utils/pagination.js";
@@ -83,35 +84,12 @@ export const createItemService = async (itemData) => {
           newItem.inventory.push({
             locationId,
             currentStock: qty || 0,
+            openingStock: qty || 0,
           });
 
           if (qty > 0) {
             totalNewStock += qty;
           }
-
-          // if ((qty || 0) > 0) {
-          //   totalNewStock += qty;
-          // const existingMovementsCount = await StockMovement.countDocuments({
-          //   itemId: newItem._id,
-          // }).session(session);
-
-          // await StockMovement.create(
-          //   [
-          //     {
-          //       itemId: newItem._id,
-          //       locationId,
-          //       qty,
-          //       type: "IN",
-          //       reference: "manual",
-          //       note: "Initial stock on item creation",
-          //       currentStock: qty,
-          //       closingStock: 0,
-          //       movementSequence: existingMovementsCount + 1,
-          //     },
-          //   ],
-          //   { session },
-          // );
-          // }
         }
 
         if (isNew) {
@@ -212,7 +190,6 @@ export const getDashboardLowStockService = async (query = {}) => {
         currentStockAtLocation: "$inventory.currentStock",
         locationName: "$locationDetails.name",
         locationNo: "$locationDetails.locationNo",
-        // locationId: "$locationDetails._id",
       },
     },
   ];
@@ -306,6 +283,7 @@ export const getItemLocationServices = async (itemId, query = {}) => {
         _id: 0,
         locationId: "$locationDetails",
         currentStock: "$inventory.currentStock",
+        openingStock: "$inventory.openingStock",
       },
     },
   ];
@@ -403,6 +381,7 @@ export const updateItemService = async (itemId, updateData) => {
           updatedItem.inventory.push({
             locationId,
             currentStock: qty,
+            openingStock: qty,
           });
 
           totalNewStock += qty;
@@ -434,6 +413,8 @@ export const deleteItemService = async (itemId) => {
   if (item.currentStock > 0) {
     throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Item has stock, cannot delete");
   }
+
+  await StockMovement.deleteMany({ itemId });
 
   await Item.findByIdAndDelete(itemId);
 

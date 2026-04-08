@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { Button, Space, message } from "antd";
+import { Button, Space, message, Modal } from "antd";
 import { ArrowLeftOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import PageHeaderBar from "../components/PageHeaderBar";
 import ViewLocationItem from "../components/ViewLocationItem";
@@ -44,13 +44,21 @@ const ItemDetailsPage = () => {
   };
 
   const handleDelete = async () => {
-    try {
-      await deleteItem(itemId).unwrap();
-      message.success("Item deleted successfully");
-      navigate(ROUTE_URL.ITEMS);
-    } catch (error) {
-      message.error(error?.data?.message || "Failed to delete item");
-    }
+    Modal.confirm({
+      title: "Delete Item",
+      content: "Are you sure you want to delete this item?",
+      okText: "Delete",
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          await deleteItem(itemId).unwrap();
+          message.success("Item deleted successfully");
+          navigate(ROUTE_URL.ITEMS);
+        } catch (error) {
+          message.error(error?.data?.message || "Failed to delete item");
+        }
+      },
+    })
   }
 
   const inventoryColumns = getItemColumns({
@@ -60,6 +68,7 @@ const ItemDetailsPage = () => {
     showInventory: true,
     showLowStockStatus: true,
     globalThreshold: lowStockThreshold,
+    showOpeningStock: true,
   });
 
   return (

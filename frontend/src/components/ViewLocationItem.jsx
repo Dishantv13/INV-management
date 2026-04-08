@@ -22,7 +22,7 @@ const locationHeaderConfig = [
     key: "status",
     label: "Status",
     render: (value) => (
-      <Tag color={value === "active" ? "success" : "default"}>
+      <Tag color={value === "active" ? "success" : "error"}>
         {value || "unknown"}
       </Tag>
     ),

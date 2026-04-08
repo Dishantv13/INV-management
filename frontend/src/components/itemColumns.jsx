@@ -18,6 +18,7 @@ export const getItemColumns = ({
   healthyStatusLabel = "OK",
   showLocation = false,
   globalThreshold = null,
+  showOpeningStock = false,
 } = {}) => {
   const columns = []
 
@@ -78,6 +79,13 @@ export const getItemColumns = ({
         render: (_, record) => record.locationId?.locationNo || "-",
       }
     );
+  }
+  if (showOpeningStock) {
+    columns.push({
+      title: "Opening Stock",
+      key: "openingStock",
+      render: (_, record) => record.openingStock || "-",
+    });
   }
 
   columns.push({
